@@ -1,0 +1,10 @@
+name = "fine-arts-exhibition"
+main = "src/index.js"
+compatibility_date = "2026-08-08"
+
+[vars]
+R2_BUCKET_NAME = "fine-arts-exhibition"
+
+[[r2_buckets]]
+binding = "EXHIBITION_BUCKET"
+bucket_name = "fine-arts-exhibition"

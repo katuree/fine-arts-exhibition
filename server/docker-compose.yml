@@ -1,0 +1,20 @@
+services:
+  fine-arts-exhibition-api:
+    build: .
+    container_name: fine-arts-exhibition-api
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    environment:
+      PORT: "8080"
+      GITHUB_OWNER: "katuree"
+      GITHUB_REPO: "fine-arts-exhibition"
+      GITHUB_BRANCH: "main"
+      # Set this in TrueNAS app environment, do not commit real token:
+      GITHUB_TOKEN: ""
+      PUBLIC_BASE_URL: "http://192.168.1.45:8088"
+      MAX_FILE_MB: "50"
+    volumes:
+      # Change the left side to your TrueNAS MEGA sync dataset path.
+      # This folder receives uploaded artwork files.
+      - /mnt/tank/mega/fine-arts-exhibition:/data/uploads
