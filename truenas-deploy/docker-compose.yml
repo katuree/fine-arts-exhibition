@@ -1,0 +1,22 @@
+# Fine Arts Exhibition storage stack for TrueNAS.
+# Deploy this via TrueNAS Apps -> Discover -> Custom App -> Use Docker Compose.
+
+services:
+  syncthing:
+    image: syncthing/syncthing:1.27
+    container_name: fine-arts-exhibition-syncthing
+    restart: unless-stopped
+    hostname: fine-arts-exhibition-syncthing
+    environment:
+      - PUID=0
+      - PGID=0
+    ports:
+      - "8384:8384"   # Web UI
+      - "22000:22000/tcp"   # Sync
+      - "22000:22000/udp"   # Discovery
+      - "21027:21027/udp"   # Local discovery
+    volumes:
+      - /mnt/tank/data/fine-arts-exhibition:/data
+      - /mnt/tank/ix-apps/syncthing/config:/var/syncthing/config
+    security_opt:
+      - no-new-privileges:true
