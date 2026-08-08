@@ -1,87 +1,106 @@
-# TrueNAS + MEGA Setup for Fine Arts Exhibition
+# TrueNAS + Syncthing Setup for Fine Arts Exhibition
 
 Goal:
 
 - GitHub hosts the website and registration metadata.
-- TrueNAS receives uploads and stores image/PDF files in a MEGA sync folder.
-- MEGA syncs the files to mega.nz without keeping the Windows PC on.
+- TrueNAS receives artwork uploads and stores files in a dataset.
+- Syncthing on TrueNAS syncs those files to your Windows PC
+  (no cloud account needed, no always-on PC needed).
 
-## 1. Install MEGA on TrueNAS
+## 1. Confirm the dataset
 
-In the already-open TrueNAS Chrome tab:
+In TrueNAS (already open in Chrome):
 
-1. Go to Apps -> Available Apps.
-2. Search for `MEGA`, `MEGAcmd`, or `MegaSync`.
-3. Install the app if it exists.
-4. Configure its sync folder/dataset, for example:
-   `/mnt/tank/mega/fine-arts-exhibition`
+1. Datasets -> Pool/data -> `fine-arts-exhibition`.
+   Dataset path: `/mnt/tank/data/fine-arts-exhibition`.
+2. Inside it, a `files/` folder will be created automatically by
+   the registration API.
 
-If MEGA is not available in Apps, use a custom Docker app for MEGAcmd or use another always-on storage app. The registration API only needs a normal folder path mounted at `/data/uploads`.
+If you don't see this dataset yet, create it under Pool/data with
+the name `fine-arts-exhibition` (Generic preset).
 
-## 2. Deploy the registration API on TrueNAS
+## 2. Deploy Syncthing
 
-Use the compose file in:
+Two routes:
 
-`server/docker-compose.yml`
+### Route A: TrueNAS Custom App (recommended)
 
-Important volume line:
+1. Apps -> Discover -> Custom App.
+2. Choose "Use Docker Compose".
+3. Paste the contents of `truenas-deploy/docker-compose.yml`
+   from the GitHub repo.
 
-```yaml
-- /mnt/tank/mega/fine-arts-exhibition:/data/uploads
-```
+### Route B: Install Syncthing from the catalog
 
-Change `/mnt/tank/mega/fine-arts-exhibition` to the real MEGA sync folder path on your TrueNAS.
+1. Apps -> Discover -> search "Syncthing".
+2. Click Install.
+3. In "Syncthing Config Storage", leave as ixVolume.
+4. In "Additional Storage", add:
+   - Host Path: `/mnt/tank/data/fine-arts-exhibition`
+   - Mount Path: `/data`
+5. Install.
 
-The API will run on:
+## 3. Open Syncthing Web UI
 
-`http://192.168.1.45:8088`
-
-## 3. GitHub token
-
-The API needs to write registration JSON files to this repo:
-
-`https://github.com/katuree/fine-arts-exhibition`
-
-Create a GitHub token with repo contents write access and paste it only into the TrueNAS app environment variable:
-
-`GITHUB_TOKEN`
-
-Do not paste the token into chat.
-
-Other environment variables:
+After install:
 
 ```text
-GITHUB_OWNER=katuree
-GITHUB_REPO=fine-arts-exhibition
-GITHUB_BRANCH=main
-PUBLIC_BASE_URL=http://192.168.1.45:8088
-MAX_FILE_MB=50
+http://192.168.1.45:8384
 ```
 
-## 4. Verify
+The Syncthing API key is in the Syncthing app config on TrueNAS.
 
-After deploying the API:
+## 4. Pair with the Windows PC
 
-```bash
-curl http://192.168.1.45:8088/api/health
-```
+On the Windows PC:
 
-Expected:
+1. Install Syncthing from https://syncthing.net/downloads/.
+2. Open its Web UI (default http://127.0.0.1:8384).
+3. Note the Device ID (Actions -> Show Device ID).
+4. In the TrueNAS Syncthing Web UI, click Add Remote Device,
+   paste the Windows Device ID.
+5. Add a folder on TrueNAS:
+   - Folder Path: `/data/files`
+   - Folder ID: `files`
+   - Share with the Windows device.
+6. On Windows Syncthing, accept the share and set the local
+   folder (for example `G:\Fine-Arts-Exhibition-Uploads`).
 
-```json
-{
-  "ok": true,
-  "service": "fine-arts-exhibition-api",
-  "githubConfigured": true
-}
-```
+Now artwork files uploaded by students will appear on your PC
+automatically, even if your PC was off when the upload happened.
 
-## 5. Important public-site note
+## 5. Deploy the registration API (next step)
 
-The GitHub Pages website is HTTPS:
+The API server lives in `server/` and is what receives HTTP
+uploads from the public website.
 
-`https://katuree.github.io/fine-arts-exhibition/`
+1. In TrueNAS, Apps -> Discover -> Custom App.
+2. Use Docker Compose and paste
+   `server/docker-compose.yml` from the GitHub repo.
+3. Edit the volume line so it points at the same dataset:
 
-Browsers block HTTPS pages from uploading to a plain HTTP API. For public student registration, the TrueNAS API must also be exposed over HTTPS, preferably with Cloudflare Tunnel.
+   ```yaml
+   - /mnt/tank/data/fine-arts-exhibition:/data/uploads
+   ```
 
-Until HTTPS is configured for the API, test the registration form from LAN using a local/static HTTP copy or by serving the site from TrueNAS.
+4. Set environment variables:
+   - `GITHUB_OWNER=katuree`
+   - `GITHUB_REPO=fine-arts-exhibition`
+   - `GITHUB_BRANCH=main`
+   - `PUBLIC_BASE_URL=http://192.168.1.45:8088`
+   - `MAX_FILE_MB=50`
+   - `GITHUB_TOKEN=<paste your GitHub token here, only inside TrueNAS>`
+5. Install. API will run on `http://192.168.1.45:8088`.
+
+## 6. Important public-site note
+
+The GitHub Pages site is HTTPS:
+https://katuree.github.io/fine-arts-exhibition/
+
+Browsers block HTTPS pages from uploading to plain HTTP APIs.
+For public student registration, the API must be exposed via
+HTTPS, ideally with Cloudflare Tunnel, not by exposing the
+TrueNAS admin UI.
+
+Until then, test the registration form locally or by serving
+the site from the same TrueNAS instance.
