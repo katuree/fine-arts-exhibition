@@ -472,6 +472,11 @@
       background: #f8fafb;
     }
 
+
+    .edit-registration-panel[hidden] {
+      display: none !important;
+    }
+
     .edit-registration-panel h2 {
       font-size: clamp(1.35rem, 3vw, 2.2rem);
       line-height: 1;
@@ -801,7 +806,7 @@
       </div>
 
       <div class="form-card">
-        <section class="edit-registration-panel" id="edit-registration" aria-label="Edit existing registration">
+        <section class="edit-registration-panel" id="edit-registration" aria-label="Edit existing registration" hidden>
           <h2>Edit Existing Registration</h2>
           <p>Already registered? Enter your Registration ID to load and update the application.</p>
           <div class="edit-registration-controls">
@@ -1446,6 +1451,7 @@
                 editRegistrationIdInput.value = '';
                 editModeBadge.hidden = true;
                 cancelEditButton.hidden = true;
+                document.getElementById('edit-registration').hidden = true;
                 artworkFileInput.required = true;
                 form.querySelector('.register-button').textContent = 'Register Artwork';
                 editRegistrationStatus.textContent = '';
@@ -1576,8 +1582,10 @@
               updateOtherCategoryField();
 
               if (new URLSearchParams(window.location.search).get('mode') === 'edit') {
+                const editRegistrationPanel = document.getElementById('edit-registration');
+                editRegistrationPanel.hidden = false;
                 setTimeout(() => {
-                  document.getElementById('edit-registration')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   editRegistrationIdInput.focus();
                 }, 120);
               }
