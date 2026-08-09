@@ -162,6 +162,44 @@ app.get('/api/registrations/:id', async (req, res) => {
   }
 });
 
+app.patch('/api/registrations/:id/review', async (req, res) => {
+  try {
+    const found = await findRegistrationById(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Registration not found' });
+
+    const requestedStatus = normalizeReviewStatus(req.body?.status);
+    if (!requestedStatus) return res.status(400).json({ error: 'Use Approved, Rejected, or Pending status.' });
+
+    const now = new Date().toISOString();
+    const registration = {
+      ...found.registration,
+      status: requestedStatus.toLowerCase(),
+      reviewStatus: requestedStatus,
+      reviewedAt: now,
+      updatedAt: now,
+    };
+
+    let approvedCopy = null;
+    if (requestedStatus === 'Approved') {
+      approvedCopy = await copyRegistrationToApproved(found.dir, registration);
+      registration.approvedCopy = approvedCopy;
+    }
+
+    await fs.writeFile(found.infoPath, JSON.stringify(registration, null, 2), 'utf-8');
+
+    let github = null;
+    if (GITHUB_TOKEN) {
+      github = await saveRegistrationToGitHub(registration.id, registration, `Review ${requestedStatus}`);
+      await publishStatsToGitHub('registration-review');
+    }
+
+    res.json({ ok: true, id: registration.id, status: requestedStatus, registration, approvedCopy, github });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message || 'Registration review failed' });
+  }
+});
+
 app.put('/api/registrations/:id', upload.array('artworkFiles', 10), async (req, res) => {
   try {
     const found = await findRegistrationById(req.params.id);
@@ -313,6 +351,55 @@ async function findRegistrationById(id) {
   }
 
   return null;
+}
+
+function normalizeReviewStatus(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'approved' || normalized === 'approve') return 'Approved';
+  if (normalized === 'rejected' || normalized === 'reject') return 'Rejected';
+  if (normalized === 'pending' || normalized === 'request changes' || normalized === 'changes requested') return 'Pending';
+  return '';
+}
+
+async function copyRegistrationToApproved(sourceDir, registration) {
+  const yearFolder = registration.storage?.yearFolder || normalizeYear(registration.student?.studentYear);
+  const studentFolder = registration.storage?.studentFolder || `${safePathSegment(registration.student?.rollNumber, 'No Roll No')} - ${safePathSegment(registration.student?.fullName, 'Unnamed Student')}`;
+  const artworkFolder = registration.storage?.artworkFolder || safePathSegment(registration.artwork?.title, 'Untitled Artwork');
+  const approvedDir = path.join(UPLOAD_DIR, APPROVED_ROOT, yearFolder, studentFolder, artworkFolder);
+  const approvedInfoPath = path.join(approvedDir, 'registration-info.json');
+
+  await fs.mkdir(path.dirname(approvedDir), { recursive: true });
+  await fs.rm(approvedDir, { recursive: true, force: true });
+  await fs.cp(sourceDir, approvedDir, { recursive: true });
+
+  const approvedRegistration = {
+    ...registration,
+    storage: {
+      ...(registration.storage || {}),
+      root: APPROVED_ROOT,
+      yearFolder,
+      studentFolder,
+      artworkFolder,
+      megaSyncPath: path.relative(UPLOAD_DIR, approvedDir).replace(/\\/g, '/'),
+    },
+    files: (registration.files || []).map((file) => {
+      const storedName = file.storedName || file.originalName || '';
+      const finalPath = path.join(approvedDir, path.basename(storedName));
+      const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
+      return {
+        ...file,
+        megaSyncPath: rel,
+        url: `${PUBLIC_BASE_URL}/storage/${rel.split('/').map(encodeURIComponent).join('/')}`,
+      };
+    }),
+  };
+  await fs.writeFile(approvedInfoPath, JSON.stringify(approvedRegistration, null, 2), 'utf-8');
+
+  return {
+    root: APPROVED_ROOT,
+    megaSyncPath: path.relative(UPLOAD_DIR, approvedDir).replace(/\\/g, '/'),
+    fileCount: approvedRegistration.files.length,
+  };
 }
 
 async function removeArtworkFiles(dir) {

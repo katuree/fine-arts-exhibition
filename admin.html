@@ -697,7 +697,7 @@
             <tbody id="recent-registrations-body"></tbody>
           </table>
         </div>
-        <p class="dashboard-note" id="dashboard-note">Dashboard data loads from admin-data.json. Approval buttons update the screen only until a backend approval endpoint is added.</p>
+        <p class="dashboard-note" id="dashboard-note">Dashboard data loads from admin-data.json. Approve copies the artwork folder to Approved in MEGA sync storage when the LAN API is reachable.</p>
       </section>
     </section>
   </div>
@@ -747,6 +747,7 @@
   <script>
     const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
     const ADMIN_AUTH_KEY = 'fineArtsAdminAuthenticated';
+    const API_URL = 'http://192.168.1.45:8088';
     const adminLoginPanel = document.getElementById('admin-login-panel');
     const adminPanel = document.getElementById('admin-panel');
     const adminPasswordForm = document.getElementById('admin-password-form');
@@ -850,9 +851,58 @@
       });
     }
 
-    function renderDashboard(data) {
-      dashboardRegistrations = Array.isArray(data.submissions) ? data.submissions : [];
-      updateMetrics(data.summary || calculateSummary(dashboardRegistrations));
+    function normalizeDashboardStatus(value) {
+      const normalized = String(value || '').trim().toLowerCase();
+      if (normalized === 'approved' || normalized === 'approve') return 'Approved';
+      if (normalized === 'rejected' || normalized === 'reject') return 'Rejected';
+      return 'Pending';
+    }
+
+    function mergeLiveRegistration(staticItem, liveRegistration) {
+      if (!liveRegistration) return staticItem;
+      const student = liveRegistration.student || {};
+      const artwork = liveRegistration.artwork || {};
+      const files = Array.isArray(liveRegistration.files) ? liveRegistration.files : staticItem.files;
+      const firstFile = Array.isArray(files) && files.length ? files[0] : null;
+      return {
+        ...staticItem,
+        student: student.fullName || staticItem.student,
+        rollNumber: student.rollNumber || staticItem.rollNumber,
+        department: artwork.category || staticItem.department,
+        year: student.studentYear || staticItem.year,
+        artwork: artwork.title || staticItem.artwork,
+        medium: artwork.medium || staticItem.medium,
+        size: artwork.dimensions || staticItem.size,
+        description: artwork.description || staticItem.description,
+        status: normalizeDashboardStatus(liveRegistration.reviewStatus || liveRegistration.status || staticItem.status),
+        imageUrl: firstFile?.url || staticItem.imageUrl,
+        fileName: firstFile?.originalName || firstFile?.storedName || staticItem.fileName,
+        files: Array.isArray(files) ? files : (staticItem.files || []),
+        approvedCopy: liveRegistration.approvedCopy || staticItem.approvedCopy,
+        updatedAt: liveRegistration.updatedAt || staticItem.updatedAt,
+      };
+    }
+
+    async function hydrateLiveRegistrationStatuses(registrations) {
+      const hydrated = [];
+      for (const item of registrations) {
+        try {
+          const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(item.id)}`, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`Registration ${item.id} live lookup failed: ${response.status}`);
+          const result = await response.json();
+          hydrated.push(mergeLiveRegistration(item, result.registration));
+        } catch (error) {
+          console.warn('Could not load live registration status', error);
+          hydrated.push(item);
+        }
+      }
+      return hydrated;
+    }
+
+    async function renderDashboard(data) {
+      const staticRegistrations = Array.isArray(data.submissions) ? data.submissions : [];
+      dashboardRegistrations = await hydrateLiveRegistrationStatuses(staticRegistrations);
+      updateMetrics(calculateSummary(dashboardRegistrations));
       renderRegistrations();
     }
 
@@ -861,11 +911,11 @@
         const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`admin-data.json request failed: ${response.status}`);
         const data = await response.json();
-        renderDashboard(data);
+        await renderDashboard(data);
       } catch (error) {
         console.warn('Could not load admin dashboard data', error);
         dashboardNote.textContent = 'Could not load admin-data.json. Check the deployment or data publisher.';
-        renderDashboard({ summary: { total: 0, pending: 0, approved: 0, rejected: 0 }, submissions: [] });
+        await renderDashboard({ summary: { total: 0, pending: 0, approved: 0, rejected: 0 }, submissions: [] });
       }
     }
 
@@ -992,15 +1042,35 @@
       selectedRegistrationId = null;
     }
 
-    function applyReviewStatus(status) {
+    async function applyReviewStatus(status) {
       if (!selectedRegistrationId) return;
       const item = dashboardRegistrations.find((registration) => registration.id === selectedRegistrationId);
       if (!item) return;
-      item.status = status;
-      updateMetrics(calculateSummary(dashboardRegistrations));
-      renderRegistrations();
-      setText('modal-status', status);
-      dashboardNote.textContent = 'Review status changed on this screen. Add a backend approval endpoint to save it permanently.';
+      dashboardNote.textContent = status === 'Approved'
+        ? 'Approving registration and copying artwork folder to Approved in MEGA sync storage...'
+        : 'Saving review status...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(selectedRegistrationId)}/review`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || `Review failed: ${response.status}`);
+
+        item.status = result.status || status;
+        item.approvedCopy = result.approvedCopy || item.approvedCopy;
+        updateMetrics(calculateSummary(dashboardRegistrations));
+        renderRegistrations();
+        setText('modal-status', item.status);
+        dashboardNote.textContent = item.status === 'Approved' && item.approvedCopy?.megaSyncPath
+          ? `Approved copy saved to ${item.approvedCopy.megaSyncPath}. MEGA will sync it automatically.`
+          : 'Review status saved on the backend.';
+      } catch (error) {
+        console.error(error);
+        dashboardNote.textContent = `Could not save review status: ${error.message}`;
+      }
     }
 
     function showAdminPanel() {
