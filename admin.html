@@ -24,6 +24,9 @@
       padding: clamp(28px, 5vw, 56px);
       text-align: center;
     }
+    main[hidden], .admin-panel[hidden], .login-panel[hidden] {
+      display: none !important;
+    }
     h1 {
       margin: 0;
       font-size: clamp(48px, 9vw, 104px);
@@ -68,10 +71,67 @@
       font-weight: 950;
       color: #050505;
     }
+    .admin-password-form {
+      margin-top: 32px;
+      display: grid;
+      gap: 14px;
+      text-align: left;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    input[type="password"] {
+      width: 100%;
+      border: 1px solid #bfc8ca;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #050505;
+      font: inherit;
+      font-size: 16px;
+    }
+    .auth-message {
+      min-height: 22px;
+      margin: 0;
+      color: #9b1c1c;
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .admin-top-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 18px;
+    }
+    button.secondary-button {
+      background: #ffffff;
+      color: #050505;
+    }
   </style>
 </head>
 <body>
-  <main aria-labelledby="admin-title">
+  <main class="login-panel" id="admin-login-panel" aria-labelledby="admin-login-title">
+    <h1 id="admin-login-title">Admin</h1>
+    <p>Enter the admin password to view Fine Arts Exhibition management information.</p>
+    <form class="admin-password-form" id="admin-password-form" action="#">
+      <div>
+        <label for="admin-password">Password</label>
+        <input id="admin-password" name="adminPassword" type="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit">Open Admin</button>
+      <p class="auth-message" id="admin-auth-message" aria-live="polite"></p>
+    </form>
+    <div class="actions">
+      <a class="secondary" href="index.html">Back</a>
+    </div>
+  </main>
+
+  <main class="admin-panel" id="admin-panel" aria-labelledby="admin-title" hidden>
+    <div class="admin-top-row">
+      <button class="secondary-button" type="button" id="admin-logout-button">Lock Admin</button>
+    </div>
     <h1 id="admin-title">Admin</h1>
     <p>Admin review tools are not public yet. This page shows the live registration count and keeps management access separate from student registration.</p>
     <div id="admin-artwork-count" class="stat">0</div>
@@ -83,6 +143,34 @@
   </main>
   <script>
     const API_URL = 'http://192.168.1.45:8088';
+    const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
+    const ADMIN_AUTH_KEY = 'fineArtsAdminAuthenticated';
+    const adminLoginPanel = document.getElementById('admin-login-panel');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminPasswordForm = document.getElementById('admin-password-form');
+    const adminPasswordInput = document.getElementById('admin-password');
+    const adminAuthMessage = document.getElementById('admin-auth-message');
+    const adminLogoutButton = document.getElementById('admin-logout-button');
+
+    async function sha256Hex(value) {
+      const encoded = new TextEncoder().encode(value);
+      const digest = await crypto.subtle.digest('SHA-256', encoded);
+      return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function showAdminPanel() {
+      adminLoginPanel.hidden = true;
+      adminPanel.hidden = false;
+      updateAdminArtworkCount();
+    }
+
+    function showLoginPanel(message = '') {
+      adminPanel.hidden = true;
+      adminLoginPanel.hidden = false;
+      adminAuthMessage.textContent = message;
+      adminPasswordInput.value = '';
+      adminPasswordInput.focus();
+    }
 
     function shouldUseLanApi() {
       const host = window.location.hostname;
@@ -115,7 +203,29 @@
         console.warn('Could not update admin artwork count', error);
       }
     }
-    updateAdminArtworkCount();
+    adminPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      adminAuthMessage.textContent = '';
+      const passwordHash = await sha256Hex(adminPasswordInput.value);
+      if (passwordHash !== ADMIN_PASSWORD_HASH) {
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
+        showLoginPanel('Incorrect password.');
+        return;
+      }
+      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+      showAdminPanel();
+    });
+
+    adminLogoutButton.addEventListener('click', () => {
+      sessionStorage.removeItem(ADMIN_AUTH_KEY);
+      showLoginPanel();
+    });
+
+    if (sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true') {
+      showAdminPanel();
+    } else {
+      showLoginPanel();
+    }
   </script>
 </body>
 </html>
