@@ -477,6 +477,11 @@
       display: none !important;
     }
 
+
+    #artwork-registration-form[hidden] {
+      display: none !important;
+    }
+
     .edit-registration-panel h2 {
       font-size: clamp(1.35rem, 3vw, 2.2rem);
       line-height: 1;
@@ -957,6 +962,7 @@
               const currentFilesPanel = document.getElementById('current-files-panel');
               const currentFilesContent = document.getElementById('current-files-content');
               const form = document.getElementById('artwork-registration-form');
+              const isEditPage = new URLSearchParams(window.location.search).get('mode') === 'edit';
               const note = form.querySelector('.note');
               const submissionSuccess = document.getElementById('submission-success');
               const successSubmissionId = document.getElementById('success-submission-id');
@@ -1422,6 +1428,7 @@
               }
 
               function setEditMode(registration) {
+                form.hidden = false;
                 editingRegistrationId = registration.id;
                 editRegistrationIdInput.value = registration.id;
                 editModeBadge.hidden = false;
@@ -1452,6 +1459,7 @@
                 editModeBadge.hidden = true;
                 cancelEditButton.hidden = true;
                 document.getElementById('edit-registration').hidden = true;
+                form.hidden = isEditPage;
                 artworkFileInput.required = true;
                 form.querySelector('.register-button').textContent = 'Register Artwork';
                 editRegistrationStatus.textContent = '';
@@ -1581,9 +1589,11 @@
 
               updateOtherCategoryField();
 
-              if (new URLSearchParams(window.location.search).get('mode') === 'edit') {
+              if (isEditPage) {
                 const editRegistrationPanel = document.getElementById('edit-registration');
                 editRegistrationPanel.hidden = false;
+                form.hidden = true;
+                note.textContent = 'Enter your Registration ID above to load your saved details.';
                 setTimeout(() => {
                   editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   editRegistrationIdInput.focus();
