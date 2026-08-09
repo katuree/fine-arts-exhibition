@@ -19,6 +19,36 @@
       "status": "Pending",
       "imageUrl": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
       "fileName": "JBS stamp (transparent).png",
+      "files": [
+        {
+          "originalName": "JBS stamp (transparent).png",
+          "storedName": "JBS stamp (transparent).png",
+          "mimeType": "image/png",
+          "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
+          "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/JBS stamp (transparent).png"
+        },
+        {
+          "originalName": "JBS stamp.png",
+          "storedName": "JBS stamp.png",
+          "mimeType": "image/png",
+          "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp.png",
+          "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/JBS stamp.png"
+        },
+        {
+          "originalName": "ChatGPT Image Aug 2, 2026, 12_17_50 PM.png",
+          "storedName": "ChatGPT Image Aug 2, 2026, 12_17_50 PM.png",
+          "mimeType": "image/png",
+          "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2012_17_50%20PM.png",
+          "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 12_17_50 PM.png"
+        },
+        {
+          "originalName": "ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
+          "storedName": "ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
+          "mimeType": "image/png",
+          "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2011_45_35%20AM.png",
+          "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 11_45_35 AM.png"
+        }
+      ],
       "createdAt": "2026-08-09T13:34:56.009Z",
       "updatedAt": ""
     }

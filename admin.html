@@ -486,6 +486,71 @@
       line-height: 1.5;
     }
 
+
+    .preview-gallery {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .preview-main-image {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .preview-main-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: zoom-in;
+    }
+
+    .preview-thumb-strip {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(64px, 78px);
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .preview-thumb-button {
+      width: 100%;
+      min-height: 58px;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+
+    .preview-thumb-button.active {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px var(--ink) inset;
+    }
+
+    .preview-thumb-button img {
+      width: 100%;
+      height: 58px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preview-file-count {
+      margin: 0;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -798,6 +863,81 @@
       document.getElementById(id).textContent = value || '—';
     }
 
+    function getArtworkFiles(item) {
+      const files = Array.isArray(item.files) ? item.files.filter((file) => file.url) : [];
+      if (files.length) return files;
+      if (item.imageUrl) return [{ originalName: item.fileName || item.artwork || 'Artwork file', url: item.imageUrl, mimeType: 'image/*' }];
+      return [];
+    }
+
+    function renderPreviewGallery(item) {
+      const files = getArtworkFiles(item);
+      const previewFrame = document.getElementById('modal-preview-frame');
+      previewFrame.innerHTML = '';
+      if (!files.length) {
+        previewFrame.innerHTML = '<div class="preview-fallback">No preview image is available for this registration.</div>';
+        modalFullImage.hidden = true;
+        modalFullImage.href = '#';
+        return;
+      }
+
+      let selectedIndex = 0;
+      const gallery = document.createElement('div');
+      gallery.className = 'preview-gallery';
+      const main = document.createElement('div');
+      main.className = 'preview-main-image';
+      const strip = document.createElement('div');
+      strip.className = 'preview-thumb-strip';
+      const count = document.createElement('p');
+      count.className = 'preview-file-count';
+
+      function renderSelected(index) {
+        selectedIndex = index;
+        const file = files[selectedIndex];
+        const fileName = file.originalName || file.storedName || item.artwork || 'Artwork image';
+        main.innerHTML = '';
+        const image = document.createElement('img');
+        image.src = file.url;
+        image.alt = `Artwork preview ${selectedIndex + 1} of ${files.length}: ${fileName}`;
+        image.title = 'Tap to view full screen';
+        image.onerror = () => {
+          main.innerHTML = '<div class="preview-fallback">Preview image could not be loaded. Use View Full Image to open it directly.</div>';
+        };
+        image.addEventListener('click', () => openImageLightbox(file.url, fileName));
+        main.appendChild(image);
+        modalFullImage.hidden = false;
+        modalFullImage.href = file.url;
+        modalFullImage.textContent = files.length > 1 ? `View Full Image ${selectedIndex + 1}` : 'View Full Image';
+        count.textContent = files.length > 1 ? `${selectedIndex + 1} of ${files.length} images` : '1 image';
+        strip.querySelectorAll('.preview-thumb-button').forEach((button, buttonIndex) => {
+          button.classList.toggle('active', buttonIndex === selectedIndex);
+          button.setAttribute('aria-pressed', buttonIndex === selectedIndex ? 'true' : 'false');
+        });
+      }
+
+      files.forEach((file, index) => {
+        const fileName = file.originalName || file.storedName || `Artwork image ${index + 1}`;
+        const button = document.createElement('button');
+        button.className = 'preview-thumb-button';
+        button.type = 'button';
+        button.setAttribute('aria-label', `Show artwork image ${index + 1}: ${fileName}`);
+        const thumb = document.createElement('img');
+        thumb.src = file.url;
+        thumb.alt = '';
+        thumb.loading = 'lazy';
+        thumb.onerror = () => { button.textContent = `IMG ${index + 1}`; };
+        button.appendChild(thumb);
+        button.addEventListener('click', () => renderSelected(index));
+        strip.appendChild(button);
+      });
+
+      gallery.appendChild(main);
+      if (files.length > 1) gallery.appendChild(strip);
+      gallery.appendChild(count);
+      previewFrame.appendChild(gallery);
+      renderSelected(0);
+    }
+
     function openImageLightbox(url, title = 'Artwork Image') {
       if (!url) return;
       lightboxTitle.textContent = title || 'Artwork Image';
@@ -832,25 +972,7 @@
       setText('modal-size', item.size);
       setText('modal-id', item.id);
       setText('modal-description', item.description);
-      const previewFrame = document.getElementById('modal-preview-frame');
-      previewFrame.innerHTML = '';
-      if (item.imageUrl) {
-        const image = document.createElement('img');
-        image.src = item.imageUrl;
-        image.alt = `Artwork preview: ${item.artwork}`;
-        image.title = 'Tap to view full screen';
-        image.addEventListener('click', () => openImageLightbox(item.imageUrl, item.artwork || 'Artwork Image'));
-        image.onerror = () => {
-          previewFrame.innerHTML = '<div class="preview-fallback">Preview image could not be loaded from the storage URL. Use View Full Image to open it directly.</div>';
-        };
-        previewFrame.appendChild(image);
-        modalFullImage.hidden = false;
-        modalFullImage.href = item.imageUrl;
-      } else {
-        previewFrame.innerHTML = '<div class="preview-fallback">No preview image is available for this registration.</div>';
-        modalFullImage.hidden = true;
-        modalFullImage.href = '#';
-      }
+      renderPreviewGallery(item);
       modal.hidden = false;
       closeModalButton.focus();
     }
