@@ -3,115 +3,497 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Fine Arts Exhibition ANU</title>
+  <title>Admin Dashboard - Fine Arts Exhibition ANU</title>
   <style>
+    :root {
+      --ink: #050505;
+      --paper: #ffffff;
+      --muted: #f4f6f7;
+      --muted-strong: #e6ebed;
+      --line: #d4dcdf;
+      --soft-ink: #555f66;
+      --danger: #b42318;
+      --danger-soft: #fff0ef;
+      --success: #157f3b;
+      --success-soft: #eefbf3;
+      --warning: #a15c00;
+      --warning-soft: #fff6e6;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
+    }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body.login-screen {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #ffffff;
-      color: #050505;
-      font-family: Arial, Helvetica, sans-serif;
       padding: 32px;
     }
-    main {
-      width: min(760px, 100%);
-      border: 2px solid #050505;
-      border-radius: 28px;
-      padding: clamp(28px, 5vw, 56px);
-      text-align: center;
-    }
-    main[hidden], .admin-panel[hidden], .login-panel[hidden] {
-      display: none !important;
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(48px, 9vw, 104px);
-      line-height: 0.9;
-      letter-spacing: -0.08em;
-      text-transform: uppercase;
-    }
-    p {
-      margin: 24px auto 0;
-      max-width: 560px;
-      color: #555555;
-      font-size: 17px;
-      line-height: 1.6;
-    }
-    .actions {
-      margin-top: 34px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      justify-content: center;
-    }
+
     a, button {
-      border: 2px solid #050505;
+      border: 2px solid var(--ink);
       border-radius: 999px;
-      background: #050505;
-      color: #ffffff;
-      padding: 13px 20px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 18px;
       text-decoration: none;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 900;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
     }
-    a.secondary {
-      background: #ffffff;
-      color: #050505;
+
+    a:hover, button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     }
-    .stat {
-      margin-top: 30px;
-      font-size: 44px;
-      font-weight: 950;
-      color: #050505;
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--ink);
+      outline-offset: 3px;
     }
+
+    a.secondary, button.secondary-button {
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    button.danger-button {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: var(--paper);
+    }
+
+    button.warning-button {
+      border-color: var(--warning);
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .login-panel {
+      width: min(760px, 100%);
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      padding: clamp(28px, 5vw, 56px);
+      text-align: center;
+    }
+
+    .login-panel[hidden], .admin-shell[hidden], .artwork-modal[hidden] {
+      display: none !important;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 18px;
+      font-size: clamp(44px, 9vw, 104px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
+
+    .login-panel p {
+      margin: 24px auto 0;
+      max-width: 560px;
+      color: var(--soft-ink);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
     .admin-password-form {
       margin-top: 32px;
       display: grid;
       gap: 14px;
       text-align: left;
     }
-    label {
-      font-size: 13px;
+
+    label, .small-label {
+      font-size: 12px;
       font-weight: 950;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
+
     input[type="password"] {
       width: 100%;
       border: 1px solid #bfc8ca;
       border-radius: 12px;
       padding: 14px 16px;
-      color: #050505;
+      color: var(--ink);
       font: inherit;
       font-size: 16px;
     }
+
     .auth-message {
       min-height: 22px;
       margin: 0;
-      color: #9b1c1c;
+      color: var(--danger);
       font-size: 14px;
       line-height: 1.5;
       text-align: center;
     }
-    .admin-top-row {
+
+    .actions {
+      margin-top: 28px;
       display: flex;
-      justify-content: flex-end;
-      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
     }
-    button.secondary-button {
-      background: #ffffff;
-      color: #050505;
+
+    .admin-shell {
+      min-height: 100vh;
+      padding: clamp(18px, 3vw, 36px);
+      background:
+        linear-gradient(135deg, rgba(5, 5, 5, 0.04), transparent 32%),
+        var(--paper);
+    }
+
+    .admin-dashboard {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 22px;
+    }
+
+    .admin-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      padding: clamp(22px, 4vw, 42px);
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin-bottom: 10px;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .admin-title {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(42px, 8vw, 96px);
+      line-height: 0.88;
+      letter-spacing: -0.075em;
+      text-transform: uppercase;
+    }
+
+    .admin-subtitle {
+      margin: 16px 0 0;
+      max-width: 700px;
+      color: var(--soft-ink);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric-card {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--paper);
+    }
+
+    .metric-label {
+      margin: 0 0 10px;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 0.9;
+      font-weight: 950;
+      letter-spacing: -0.07em;
+    }
+
+    .dashboard-section {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 14px 42px rgba(0,0,0,.07);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--muted);
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 44px);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      text-transform: uppercase;
+    }
+
+    .section-header p {
+      margin: 6px 0 0;
+      color: var(--soft-ink);
+      line-height: 1.45;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #fbfcfc;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background 150ms ease;
+    }
+
+    tbody tr:hover {
+      background: var(--muted);
+    }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--muted);
+      color: var(--soft-ink);
+      font-weight: 950;
+      letter-spacing: -0.08em;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .student-name, .artwork-name {
+      margin: 0;
+      font-weight: 900;
+    }
+
+    .muted-text {
+      margin: 4px 0 0;
+      color: var(--soft-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-pending { background: var(--warning-soft); color: var(--warning); }
+    .status-approved { background: var(--success-soft); color: var(--success); }
+    .status-rejected { background: var(--danger-soft); color: var(--danger); }
+
+    .empty-state {
+      padding: 34px;
+      color: var(--soft-ink);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .artwork-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(5, 5, 5, 0.72);
+    }
+
+    .modal-card {
+      width: min(980px, 100%);
+      max-height: min(860px, 92vh);
+      overflow: auto;
+      border-radius: 28px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--muted);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 70px);
+      line-height: 0.9;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .preview-frame {
+      min-height: 320px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      background: var(--muted);
+    }
+
+    .preview-frame img {
+      width: 100%;
+      height: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .preview-fallback {
+      padding: 24px;
+      color: var(--soft-ink);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .detail-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+    }
+
+    .detail-card span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--soft-ink);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .detail-card strong {
+      display: block;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+
+    .description-card {
+      grid-column: 1 / -1;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .dashboard-note {
+      margin: 0;
+      padding: 16px 24px 22px;
+      color: var(--soft-ink);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 820px) {
+      body.login-screen { padding: 16px; }
+      .admin-shell { padding: 14px; }
+      .admin-header { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .modal-body { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .metric-grid { grid-template-columns: 1fr; }
+      .section-header, .modal-header { align-items: flex-start; flex-direction: column; }
+      a, button { width: 100%; text-align: center; }
+      .detail-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
-<body>
+<body class="login-screen">
   <main class="login-panel" id="admin-login-panel" aria-labelledby="admin-login-title">
     <h1 id="admin-login-title">Admin</h1>
     <p>Enter the admin password to view Fine Arts Exhibition management information.</p>
@@ -128,21 +510,100 @@
     </div>
   </main>
 
-  <main class="admin-panel" id="admin-panel" aria-labelledby="admin-title" hidden>
-    <div class="admin-top-row">
-      <button class="secondary-button" type="button" id="admin-logout-button">Lock Admin</button>
-    </div>
-    <h1 id="admin-title">Admin</h1>
-    <p>Admin review tools are not public yet. This page shows the live registration count and keeps management access separate from student registration.</p>
-    <div id="admin-artwork-count" class="stat">0</div>
-    <p>Total artworks registered</p>
-    <div class="actions">
-      <a href="student.html">Open Student Page</a>
-      <a class="secondary" href="index.html">Back</a>
-    </div>
-  </main>
+  <div class="admin-shell" id="admin-panel" hidden>
+    <section class="admin-dashboard" aria-labelledby="admin-title">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">Art Exhibition Admin</p>
+          <h1 class="admin-title" id="admin-title">Dashboard</h1>
+          <p class="admin-subtitle">Review registrations, inspect artwork details, and track pending, approved, and rejected entries.</p>
+        </div>
+        <div class="actions">
+          <a class="secondary" href="student.html">Student Page</a>
+          <button class="secondary-button" type="button" id="admin-logout-button">Lock Admin</button>
+        </div>
+      </header>
+
+      <section class="metric-grid" aria-label="Registration summary">
+        <article class="metric-card">
+          <p class="metric-label">Total</p>
+          <p class="metric-value" id="metric-total">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Pending</p>
+          <p class="metric-value" id="metric-pending">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Approved</p>
+          <p class="metric-value" id="metric-approved">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Rejected</p>
+          <p class="metric-value" id="metric-rejected">0</p>
+        </article>
+      </section>
+
+      <section class="dashboard-section" aria-labelledby="recent-submissions-title">
+        <div class="section-header">
+          <div>
+            <h2 id="recent-submissions-title">Recent Submissions</h2>
+            <p>Click any artwork row to open the preview and review actions.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="Recent artwork submissions">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Student</th>
+                <th>Artwork</th>
+                <th>Dept</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-submissions-body"></tbody>
+          </table>
+        </div>
+        <p class="dashboard-note" id="dashboard-note">Dashboard data loads from admin-data.json. Approval buttons update the screen only until a backend approval endpoint is added.</p>
+      </section>
+    </section>
+  </div>
+
+  <section class="artwork-modal" id="artwork-modal" aria-modal="true" role="dialog" aria-labelledby="modal-artwork-title" hidden>
+    <article class="modal-card">
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">Artwork Preview</p>
+          <h2 id="modal-artwork-title">Artwork</h2>
+        </div>
+        <button class="secondary-button" type="button" id="close-modal-button">Close</button>
+      </header>
+      <div class="modal-body">
+        <div class="preview-frame" id="modal-preview-frame"></div>
+        <div>
+          <div class="detail-grid">
+            <div class="detail-card"><span>Student</span><strong id="modal-student">—</strong></div>
+            <div class="detail-card"><span>Roll Number</span><strong id="modal-roll">—</strong></div>
+            <div class="detail-card"><span>Department</span><strong id="modal-department">—</strong></div>
+            <div class="detail-card"><span>Status</span><strong id="modal-status">—</strong></div>
+            <div class="detail-card"><span>Title</span><strong id="modal-title">—</strong></div>
+            <div class="detail-card"><span>Medium</span><strong id="modal-medium">—</strong></div>
+            <div class="detail-card"><span>Size</span><strong id="modal-size">—</strong></div>
+            <div class="detail-card"><span>Registration ID</span><strong id="modal-id">—</strong></div>
+            <div class="detail-card description-card"><span>Description</span><strong id="modal-description">—</strong></div>
+          </div>
+          <div class="modal-actions">
+            <a id="modal-full-image" href="#" target="_blank" rel="noopener">View Full Image</a>
+            <button class="danger-button" type="button" data-review-action="Rejected">Reject</button>
+            <button class="warning-button" type="button" data-review-action="Pending">Request Changes</button>
+            <button type="button" data-review-action="Approved">Approve</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
   <script>
-    const API_URL = 'http://192.168.1.45:8088';
     const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
     const ADMIN_AUTH_KEY = 'fineArtsAdminAuthenticated';
     const adminLoginPanel = document.getElementById('admin-login-panel');
@@ -151,6 +612,13 @@
     const adminPasswordInput = document.getElementById('admin-password');
     const adminAuthMessage = document.getElementById('admin-auth-message');
     const adminLogoutButton = document.getElementById('admin-logout-button');
+    const submissionsBody = document.getElementById('recent-submissions-body');
+    const dashboardNote = document.getElementById('dashboard-note');
+    const modal = document.getElementById('artwork-modal');
+    const closeModalButton = document.getElementById('close-modal-button');
+    const modalFullImage = document.getElementById('modal-full-image');
+    let dashboardSubmissions = [];
+    let selectedSubmissionId = null;
 
     async function sha256Hex(value) {
       const encoded = new TextEncoder().encode(value);
@@ -158,13 +626,157 @@
       return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
     }
 
+    function statusClass(status) {
+      const normalized = String(status || 'Pending').toLowerCase();
+      if (normalized === 'approved') return 'status-approved';
+      if (normalized === 'rejected') return 'status-rejected';
+      return 'status-pending';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function calculateSummary(submissions) {
+      return submissions.reduce((summary, item) => {
+        summary.total += 1;
+        const status = String(item.status || 'Pending').toLowerCase();
+        if (status === 'approved') summary.approved += 1;
+        else if (status === 'rejected') summary.rejected += 1;
+        else summary.pending += 1;
+        return summary;
+      }, { total: 0, pending: 0, approved: 0, rejected: 0 });
+    }
+
+    function updateMetrics(summary) {
+      document.getElementById('metric-total').textContent = String(summary.total || 0);
+      document.getElementById('metric-pending').textContent = String(summary.pending || 0);
+      document.getElementById('metric-approved').textContent = String(summary.approved || 0);
+      document.getElementById('metric-rejected').textContent = String(summary.rejected || 0);
+    }
+
+    function renderThumbnail(item) {
+      if (item.imageUrl) {
+        return `<div class="thumb"><img src="${escapeHtml(item.imageUrl)}" alt="Artwork thumbnail for ${escapeHtml(item.artwork)}" loading="lazy" onerror="this.remove(); this.parentElement.textContent='IMG';"></div>`;
+      }
+      return '<div class="thumb" aria-label="No image preview">IMG</div>';
+    }
+
+    function renderSubmissions() {
+      submissionsBody.innerHTML = '';
+      if (!dashboardSubmissions.length) {
+        submissionsBody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
+        return;
+      }
+      dashboardSubmissions.forEach((item) => {
+        const row = document.createElement('tr');
+        row.tabIndex = 0;
+        row.dataset.submissionId = item.id;
+        row.innerHTML = `
+          <td>${renderThumbnail(item)}</td>
+          <td><p class="student-name">${escapeHtml(item.student)}</p><p class="muted-text">${escapeHtml(item.rollNumber)}</p></td>
+          <td><p class="artwork-name">${escapeHtml(item.artwork)}</p><p class="muted-text">${escapeHtml(item.medium || '—')}</p></td>
+          <td>${escapeHtml(item.department || item.year || 'Fine Arts')}</td>
+          <td><span class="status-pill ${statusClass(item.status)}">${escapeHtml(item.status || 'Pending')}</span></td>`;
+        row.addEventListener('click', () => openArtworkModal(item.id));
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openArtworkModal(item.id);
+          }
+        });
+        submissionsBody.appendChild(row);
+      });
+    }
+
+    function renderDashboard(data) {
+      dashboardSubmissions = Array.isArray(data.submissions) ? data.submissions : [];
+      updateMetrics(data.summary || calculateSummary(dashboardSubmissions));
+      renderSubmissions();
+    }
+
+    async function loadDashboardData() {
+      try {
+        const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`admin-data.json request failed: ${response.status}`);
+        const data = await response.json();
+        renderDashboard(data);
+      } catch (error) {
+        console.warn('Could not load admin dashboard data', error);
+        dashboardNote.textContent = 'Could not load admin-data.json. Check the deployment or data publisher.';
+        renderDashboard({ summary: { total: 0, pending: 0, approved: 0, rejected: 0 }, submissions: [] });
+      }
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value || '—';
+    }
+
+    function openArtworkModal(id) {
+      const item = dashboardSubmissions.find((submission) => submission.id === id);
+      if (!item) return;
+      selectedSubmissionId = id;
+      setText('modal-artwork-title', item.artwork || 'Artwork');
+      setText('modal-student', item.student);
+      setText('modal-roll', item.rollNumber);
+      setText('modal-department', item.department || item.year || 'Fine Arts');
+      setText('modal-status', item.status || 'Pending');
+      setText('modal-title', item.artwork);
+      setText('modal-medium', item.medium);
+      setText('modal-size', item.size);
+      setText('modal-id', item.id);
+      setText('modal-description', item.description);
+      const previewFrame = document.getElementById('modal-preview-frame');
+      previewFrame.innerHTML = '';
+      if (item.imageUrl) {
+        const image = document.createElement('img');
+        image.src = item.imageUrl;
+        image.alt = `Artwork preview: ${item.artwork}`;
+        image.onerror = () => {
+          previewFrame.innerHTML = '<div class="preview-fallback">Preview image could not be loaded from the storage URL.</div>';
+        };
+        previewFrame.appendChild(image);
+        modalFullImage.hidden = false;
+        modalFullImage.href = item.imageUrl;
+      } else {
+        previewFrame.innerHTML = '<div class="preview-fallback">No preview image is available for this registration.</div>';
+        modalFullImage.hidden = true;
+        modalFullImage.href = '#';
+      }
+      modal.hidden = false;
+      closeModalButton.focus();
+    }
+
+    function closeArtworkModal() {
+      modal.hidden = true;
+      selectedSubmissionId = null;
+    }
+
+    function applyReviewStatus(status) {
+      if (!selectedSubmissionId) return;
+      const item = dashboardSubmissions.find((submission) => submission.id === selectedSubmissionId);
+      if (!item) return;
+      item.status = status;
+      updateMetrics(calculateSummary(dashboardSubmissions));
+      renderSubmissions();
+      setText('modal-status', status);
+      dashboardNote.textContent = 'Review status changed on this screen. Add a backend approval endpoint to save it permanently.';
+    }
+
     function showAdminPanel() {
+      document.body.classList.remove('login-screen');
       adminLoginPanel.hidden = true;
       adminPanel.hidden = false;
-      updateAdminArtworkCount();
+      loadDashboardData();
     }
 
     function showLoginPanel(message = '') {
+      document.body.classList.add('login-screen');
       adminPanel.hidden = true;
       adminLoginPanel.hidden = false;
       adminAuthMessage.textContent = message;
@@ -172,37 +784,6 @@
       adminPasswordInput.focus();
     }
 
-    function shouldUseLanApi() {
-      const host = window.location.hostname;
-      return window.location.protocol === 'file:'
-        || host === 'localhost'
-        || host === '127.0.0.1'
-        || host.startsWith('192.168.')
-        || host.endsWith('.local');
-    }
-
-    async function fetchStatsJson() {
-      const response = await fetch(`./stats.json?v=${Date.now()}`, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`stats.json request failed: ${response.status}`);
-      return response.json();
-    }
-
-    async function fetchLanStats() {
-      const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
-      return response.json();
-    }
-
-    async function updateAdminArtworkCount() {
-      const count = document.getElementById('admin-artwork-count');
-      if (!count) return;
-      try {
-        const stats = shouldUseLanApi() ? await fetchLanStats() : await fetchStatsJson();
-        count.textContent = String(Number(stats.totalArtworksRegistered || 0));
-      } catch (error) {
-        console.warn('Could not update admin artwork count', error);
-      }
-    }
     adminPasswordForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       adminAuthMessage.textContent = '';
@@ -219,6 +800,17 @@
     adminLogoutButton.addEventListener('click', () => {
       sessionStorage.removeItem(ADMIN_AUTH_KEY);
       showLoginPanel();
+    });
+
+    closeModalButton.addEventListener('click', closeArtworkModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeArtworkModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hidden) closeArtworkModal();
+    });
+    document.querySelectorAll('[data-review-action]').forEach((button) => {
+      button.addEventListener('click', () => applyReviewStatus(button.dataset.reviewAction));
     });
 
     if (sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true') {
