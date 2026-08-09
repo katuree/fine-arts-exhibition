@@ -660,11 +660,22 @@
       document.getElementById('metric-rejected').textContent = String(summary.rejected || 0);
     }
 
-    function renderThumbnail(item) {
-      if (item.imageUrl) {
-        return `<div class="thumb"><img src="${escapeHtml(item.imageUrl)}" alt="Artwork thumbnail for ${escapeHtml(item.artwork)}" loading="lazy" onerror="this.remove(); this.parentElement.textContent='IMG';"></div>`;
+    function canAutoLoadImage(url) {
+      if (!url) return false;
+      try {
+        const imageUrl = new URL(url, window.location.href);
+        if (imageUrl.protocol === 'data:' || imageUrl.protocol === 'https:') return true;
+        return window.location.hostname.startsWith('192.168.') && imageUrl.hostname.startsWith('192.168.');
+      } catch (error) {
+        return false;
       }
-      return '<div class="thumb" aria-label="No image preview">IMG</div>';
+    }
+
+    function renderThumbnail(item) {
+      if (canAutoLoadImage(item.imageUrl)) {
+        return `<div class="thumb"><img src="${escapeHtml(item.imageUrl)}" alt="Artwork thumbnail for ${escapeHtml(item.artwork)}" loading="lazy" onerror="const holder=this.parentElement; this.remove(); if (holder) holder.textContent='IMG';"></div>`;
+      }
+      return '<div class="thumb" aria-label="Artwork file available">IMG</div>';
     }
 
     function renderSubmissions() {
@@ -733,14 +744,18 @@
       setText('modal-description', item.description);
       const previewFrame = document.getElementById('modal-preview-frame');
       previewFrame.innerHTML = '';
-      if (item.imageUrl) {
+      if (item.imageUrl && canAutoLoadImage(item.imageUrl)) {
         const image = document.createElement('img');
         image.src = item.imageUrl;
         image.alt = `Artwork preview: ${item.artwork}`;
         image.onerror = () => {
-          previewFrame.innerHTML = '<div class="preview-fallback">Preview image could not be loaded from the storage URL.</div>';
+          previewFrame.innerHTML = '<div class="preview-fallback">Preview image could not be loaded from the storage URL. Use View Full Image to open it directly.</div>';
         };
         previewFrame.appendChild(image);
+        modalFullImage.hidden = false;
+        modalFullImage.href = item.imageUrl;
+      } else if (item.imageUrl) {
+        previewFrame.innerHTML = '<div class="preview-fallback">Artwork file is available. Use View Full Image to open it directly from storage.</div>';
         modalFullImage.hidden = false;
         modalFullImage.href = item.imageUrl;
       } else {
