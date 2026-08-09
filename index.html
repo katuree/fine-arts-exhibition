@@ -5,535 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fine Arts Exhibition ANU</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital@1&display=swap');
-
     :root {
-      --page-bg: #eef2f3;
+      --ink: #050505;
       --paper: #ffffff;
-      --ink: #070707;
-      --soft-ink: #626262;
-      --line: #e3e7e8;
-      --accent: #c63f67;
-      --gold: #f2c94c;
-      --sage: #8ea39b;
-      --mint: #dfe9e5;
-      --shadow: 0 30px 90px rgba(22, 31, 36, 0.12);
-      --page-pad: clamp(18px, 6vw, 92px);
+      --muted: #666666;
+      --line: #d9d9d9;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+    * { box-sizing: border-box; }
 
     body {
+      margin: 0;
       min-height: 100vh;
-      color: var(--ink);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: var(--paper);
-      overflow-x: hidden;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 32px;
     }
 
-    a {
-      color: inherit;
+    main {
+      width: min(980px, 100%);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(54px, 10vw, 140px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+      font-weight: 950;
+    }
+
+    .prompt {
+      margin: 32px auto 0;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .choice-grid {
+      margin: 44px auto 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 700px;
+    }
+
+    .choice-card {
+      display: flex;
+      min-height: 180px;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--ink);
+      color: var(--ink);
       text-decoration: none;
-    }
-
-    .page-shell {
-      width: 100%;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-    }
-
-    .stage {
-      min-height: 100vh;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: var(--paper);
-      box-shadow: none;
-    }
-
-    .hero-card {
-      position: relative;
-      min-height: min(760px, 100svh);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(26px, 4vh, 46px);
-      padding: clamp(44px, 7vh, 72px) var(--page-pad) clamp(58px, 8vh, 84px);
-      background: var(--paper);
-      overflow: visible;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    .hero-title {
-      position: relative;
-      z-index: 1;
-      width: min(1320px, 100%);
-      transform: none;
-      font-size: clamp(4.1rem, 8.2vw, 9.2rem);
-      line-height: 0.82;
-      color: var(--ink);
-      font-weight: 900;
-      letter-spacing: 0.005em;
-      text-align: center;
+      border-radius: 28px;
+      font-size: clamp(28px, 4vw, 54px);
+      font-weight: 950;
+      letter-spacing: -0.04em;
       text-transform: uppercase;
-      white-space: nowrap;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease;
     }
 
-    .hero-title .line-one {
-      display: block;
-    }
-
-    .hero-title .line-two {
-      display: block;
-      margin-top: 0.16em;
-      letter-spacing: 0.01em;
-    }
-
-    .hero-title .triangle-a {
-      display: inline-block;
-      width: 0.74em;
-      height: 0.74em;
-      margin: 0 -0.03em 0 -0.01em;
-      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    .choice-card:hover,
+    .choice-card:focus-visible {
       background: var(--ink);
-      vertical-align: -0.02em;
+      color: var(--paper);
+      transform: translateY(-4px);
+      outline: none;
     }
 
-    .hero-title .target-o {
-      position: relative;
-      display: inline-grid;
-      place-items: center;
-      width: 0.76em;
-      height: 0.76em;
-      margin-left: 0.02em;
-      border-radius: 50%;
-      background: var(--ink);
-      vertical-align: -0.05em;
+    .note {
+      margin: 34px auto 0;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
     }
 
-    .hero-title .target-o::before {
-      content: "";
-      width: 0.36em;
-      height: 0.36em;
-      border-radius: 50%;
-      background: #fff;
-    }
-
-    .hero-title .target-o::after {
-      content: "";
-      position: absolute;
-      width: 0.1em;
-      height: 0.1em;
-      border-radius: 50%;
-      background: var(--ink);
-    }
-
-
-    .counter-badge {
-      position: relative;
-      z-index: 4;
-      left: auto;
-      top: auto;
-      width: min(900px, 100%);
-      height: auto;
-      display: grid;
-      place-items: center;
-      color: var(--ink);
-      transform: none;
-    }
-
-    .counter-badge::before {
-      content: none;
-      position: absolute;
-      inset: auto auto -34px 50%;
-      width: max-content;
-      height: auto;
-      color: var(--soft-ink);
-      font-size: clamp(0.82rem, 1vw, 1.05rem);
-      transform: translateX(-50%);
-      font-weight: 900;
-      letter-spacing: 0.34em;
-      text-align: center;
-      text-transform: uppercase;
-      animation: none;
-    }
-
-    .badge-inner {
-      position: relative;
-      width: 100%;
-      height: auto;
-      display: grid;
-      place-items: center;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-    }
-
-    .badge-inner > span {
-      width: 100%;
-      display: grid;
-      justify-items: center;
-      text-align: center;
-    }
-
-    .counter-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      color: var(--ink);
-      font-size: clamp(7.5rem, 15vw, 15rem);
-      font-weight: 900;
-      line-height: 0.74;
-      letter-spacing: 0;
-      text-align: center;
-      text-indent: 0;
-      font-variant-numeric: tabular-nums lining-nums;
-      font-feature-settings: "tnum" 1, "lnum" 1;
-      white-space: nowrap;
-      text-shadow: none;
-    }
-
-    .counter-word {
-      display: block;
-      width: 100%;
-      margin-top: 24px;
-      color: var(--soft-ink);
-      font-size: clamp(0.9rem, 1.1vw, 1.18rem);
-      font-weight: 900;
-      letter-spacing: 0.34em;
-      text-align: center;
-      text-transform: uppercase;
-    }
-
-    .actions {
-      position: relative;
-      z-index: 6;
-      left: auto;
-      bottom: auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      transform: none;
-    }
-
-    .button {
-      min-height: 38px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 18px;
-      border: 1px solid #bfc7c9;
-      border-radius: 999px;
-      background: #fff;
-      color: var(--ink);
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-
-    .button-primary {
-      border-color: var(--ink);
-      background: var(--ink);
-      color: #fff;
-    }
-
-    .button:hover,
-    .button:focus-visible {
-      transform: translateY(-2px);
-      border-color: var(--ink);
-      outline: 2px solid #cbd5d8;
-      outline-offset: 3px;
-    }
-
-    .tagline {
-      position: absolute;
-      z-index: 4;
-      right: var(--page-pad);
-      bottom: 72px;
-      color: var(--soft-ink);
-      font-family: "Playfair Display", serif;
-      font-size: 1.08rem;
-    }
-
-    .details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.15fr;
-      gap: 22px;
-      margin: 0;
-      padding: 42px var(--page-pad) 0;
-    }
-
-    .info-card {
-      min-height: 220px;
-      padding: 28px;
-      border: 1px solid #d9e0e2;
-      border-radius: 8px;
-      background: var(--paper);
-      box-shadow: 0 20px 50px rgba(22, 31, 36, 0.08);
-    }
-
-    .info-card h2 {
-      margin-bottom: 12px;
-      font-size: clamp(1.9rem, 3.5vw, 3rem);
-      line-height: 1.02;
-      font-weight: 900;
-      letter-spacing: -0.035em;
-      text-transform: uppercase;
-    }
-
-    .info-card p,
-    .info-card li {
-      color: var(--soft-ink);
-      font-size: 1rem;
-      line-height: 1.75;
-    }
-
-    .deadline-value {
-      display: inline-flex;
-      min-height: 42px;
-      align-items: center;
-      margin-top: 18px;
-      padding: 0 18px;
-      border-radius: 999px;
-      color: #fff;
-      background: var(--ink);
-      font-weight: 900;
-    }
-
-    ul {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-      padding-left: 22px;
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      margin: 0;
-      padding: 24px var(--page-pad) 28px;
-      color: var(--soft-ink);
-      font-size: 0.92rem;
-    }
-
-    .footer strong {
-      color: var(--ink);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-      }
-    }
-
-    @media (max-width: 930px) {
-      .hero-card {
-        min-height: auto;
-        padding-top: 56px;
-        padding-bottom: 72px;
-      }
-
-      .hero-title {
-        top: auto;
-        width: 100%;
-        font-size: clamp(3.4rem, 11vw, 6.4rem);
-        line-height: 0.88;
-        white-space: normal;
-      }
-
-      .counter-badge {
-        right: auto;
-        top: auto;
-        width: 100%;
-      }
-
-      .details-grid {
-        grid-template-columns: 1fr;
-        padding-top: 30px;
-      }
-    }
-
-    @media (max-width: 620px) {
-      .hero-card {
-        min-height: auto;
-        gap: 24px;
-        padding: 42px 18px 36px;
-      }
-
-      .hero-title {
-        top: auto;
-        width: 100%;
-        font-size: clamp(2.45rem, 14vw, 5.2rem);
-        line-height: 0.94;
-        letter-spacing: -0.005em;
-      }
-
-      .hero-title .line-two {
-        margin-top: 0.18em;
-        letter-spacing: 0;
-      }
-
-      .counter-badge {
-        left: auto;
-        right: auto;
-        top: auto;
-        bottom: auto;
-        width: 100%;
-        transform: none;
-        transform-origin: center;
-      }
-
-      .counter-number {
-        font-size: clamp(4.9rem, 24vw, 8rem);
-        line-height: 0.78;
-      }
-
-      .counter-word {
-        margin-top: 18px;
-        font-size: 0.78rem;
-        letter-spacing: 0.18em;
-      }
-
-      .actions {
-        left: auto;
-        right: auto;
-        bottom: auto;
-        width: 100%;
-        transform: none;
-      }
-
-      .button {
-        flex: 1 1 100%;
-        min-height: 46px;
-      }
-
-      .tagline {
-        position: static;
-        margin-top: 10px;
-        text-align: center;
-        font-size: 0.98rem;
-      }
-
-      .details-grid {
-        gap: 16px;
-        padding: 18px 18px 0;
-      }
-
-      .info-card {
-        min-height: auto;
-        padding: 22px;
-      }
-
-      .info-card h2 {
-        font-size: clamp(2rem, 11vw, 3rem);
-      }
-
-      .footer {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 22px 18px 28px;
-      }
+    @media (max-width: 680px) {
+      body { padding: 24px; }
+      .choice-grid { grid-template-columns: 1fr; }
+      .choice-card { min-height: 132px; }
     }
   </style>
 </head>
 <body>
-  <main class="page-shell">
-    <section class="stage" aria-label="Fine Arts Exhibition home">
-      <div class="hero-card" id="top">
+  <main aria-labelledby="page-title">
+    <p class="eyebrow">ANU Fine Arts Exhibition</p>
+    <h1 id="page-title">Fine Arts<br />Exhibition</h1>
+    <p class="prompt">Choose your access</p>
 
-        <h1 class="hero-title" id="hero-title" aria-label="Fine Arts Exhibition ANU">
-          <span class="line-one">Fine <span class="triangle-a" aria-hidden="true"></span>rts</span>
-          <span class="line-two">Exhibiti<span class="target-o" aria-hidden="true"></span>n</span>
-        </h1>
+    <nav class="choice-grid" aria-label="Choose access type">
+      <a id="student-link" class="choice-card" href="student.html">Student</a>
+      <a id="admin-link" class="choice-card" href="admin.html">Admin</a>
+    </nav>
 
-        <div class="counter-badge" aria-label="Total artworks registered">
-          <div class="badge-inner">
-            <span>
-              <span class="counter-number" id="artwork-count">0</span>
-              <span class="counter-word">Total Artworks Registered</span>
-            </span>
-          </div>
-        </div>
-
-        <div class="actions" aria-label="Main actions">
-          <a class="button button-primary" id="register-artwork-link" href="register.html">Register Artwork</a>
-        </div>
-
-        <p class="tagline">ANU Fine Arts Exhibition</p>
-      </div>
-
-      <section class="details-grid" aria-label="Registration information">
-        <article id="registration-deadline" class="info-card">
-          <h2>Registration Deadline</h2>
-          <p>Register your artwork before the final review date to be considered for the exhibition.</p>
-          <span class="deadline-value">Coming Soon</span>
-        </article>
-
-        <article id="rules-guidelines" class="info-card">
-          <h2>Rules &amp; Guidelines</h2>
-          <ul>
-            <li>Accepted upload formats: JPG, PNG, and PDF.</li>
-            <li>Artwork must include title, medium, category, dimensions, and description.</li>
-          </ul>
-        </article>
-      </section>
-    </section>
-
-    <footer class="footer">
-      <p><strong>Fine Arts Exhibition ANU</strong></p>
-      <p>Built for student creativity, review, and public showcase.</p>
-    </footer>
+    <p class="note">Students can register artwork. Admin access is for exhibition review and management.</p>
   </main>
-
-  <script>
-    const API_URL = 'http://192.168.1.45:8088';
-
-    async function updateArtworkCount() {
-      const counter = document.getElementById('artwork-count');
-      if (!counter) return;
-
-      try {
-        const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
-        const stats = await response.json();
-        const total = Number(stats.totalArtworksRegistered || 0);
-        counter.textContent = String(total);
-      } catch (error) {
-        console.warn('Could not update artwork count', error);
-      }
-    }
-
-    updateArtworkCount();
-  </script>
 </body>
 </html>

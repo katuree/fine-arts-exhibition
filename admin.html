@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Fine Arts Exhibition ANU</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #050505;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 32px;
+    }
+    main {
+      width: min(760px, 100%);
+      border: 2px solid #050505;
+      border-radius: 28px;
+      padding: clamp(28px, 5vw, 56px);
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(48px, 9vw, 104px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
+    p {
+      margin: 24px auto 0;
+      max-width: 560px;
+      color: #555555;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .actions {
+      margin-top: 34px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+    }
+    a, button {
+      border: 2px solid #050505;
+      border-radius: 999px;
+      background: #050505;
+      color: #ffffff;
+      padding: 13px 20px;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    a.secondary {
+      background: #ffffff;
+      color: #050505;
+    }
+    .stat {
+      margin-top: 30px;
+      font-size: 44px;
+      font-weight: 950;
+      color: #050505;
+    }
+  </style>
+</head>
+<body>
+  <main aria-labelledby="admin-title">
+    <h1 id="admin-title">Admin</h1>
+    <p>Admin review tools are not public yet. This page shows the live registration count and keeps management access separate from student registration.</p>
+    <div id="admin-artwork-count" class="stat">0</div>
+    <p>Total artworks registered</p>
+    <div class="actions">
+      <a href="student.html">Open Student Page</a>
+      <a class="secondary" href="index.html">Back</a>
+    </div>
+  </main>
+  <script>
+    const API_URL = 'http://192.168.1.45:8088';
+    async function updateAdminArtworkCount() {
+      const count = document.getElementById('admin-artwork-count');
+      try {
+        const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
+        const stats = await response.json();
+        count.textContent = String(Number(stats.totalArtworksRegistered || 0));
+      } catch (error) {
+        console.warn('Could not update admin artwork count', error);
+      }
+    }
+    updateAdminArtworkCount();
+  </script>
+</body>
+</html>
