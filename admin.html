@@ -83,8 +83,17 @@
   </main>
   <script>
     const API_URL = 'http://192.168.1.45:8088';
+    function shouldUseLanApi() {
+      const host = window.location.hostname;
+      return window.location.protocol === 'file:'
+        || host === 'localhost'
+        || host === '127.0.0.1'
+        || host.startsWith('192.168.')
+        || host.endsWith('.local');
+    }
     async function updateAdminArtworkCount() {
       const count = document.getElementById('admin-artwork-count');
+      if (!count || !shouldUseLanApi()) return;
       try {
         const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);

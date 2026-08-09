@@ -517,10 +517,18 @@
 
   <script>
     const API_URL = 'http://192.168.1.45:8088';
+    function shouldUseLanApi() {
+      const host = window.location.hostname;
+      return window.location.protocol === 'file:'
+        || host === 'localhost'
+        || host === '127.0.0.1'
+        || host.startsWith('192.168.')
+        || host.endsWith('.local');
+    }
 
     async function updateArtworkCount() {
       const counter = document.getElementById('artwork-count');
-      if (!counter) return;
+      if (!counter || !shouldUseLanApi()) return;
 
       try {
         const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
