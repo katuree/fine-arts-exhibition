@@ -185,17 +185,23 @@ app.put('/api/registrations/:id', upload.array('artworkFiles', 10), async (req, 
     }
 
     let files = Array.isArray(existing.files) ? existing.files : [];
+    const filesToRemove = parseFileRemovalList(req.body.removeExistingFiles);
     if ((req.files || []).length) {
       await removeArtworkFiles(targetDir);
       files = [];
       for (const file of req.files || []) {
         const finalPath = await uniqueDestination(targetDir, file.originalname);
         await fs.rename(file.path, finalPath);
-        const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
         files.push(fileMetadata(file, finalPath));
       }
     } else {
-      files = files.map((file) => {
+      const remainingFiles = files.filter((file) => !shouldRemoveFile(file, filesToRemove));
+      if (files.length && !remainingFiles.length) {
+        await cleanupIncoming(req.files || []);
+        return res.status(400).json({ error: 'At least one artwork file must remain. Upload a replacement before removing all existing files.' });
+      }
+      await removeSelectedArtworkFiles(targetDir, files, filesToRemove);
+      files = remainingFiles.map((file) => {
         const finalPath = path.join(targetDir, file.storedName || file.originalName || 'artwork');
         const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
         return {
@@ -302,6 +308,41 @@ async function removeArtworkFiles(dir) {
   await Promise.all(entries.map(async (entry) => {
     if (!entry.isFile() || entry.name === 'registration-info.json') return;
     await fs.unlink(path.join(dir, entry.name));
+  }));
+}
+
+
+function parseFileRemovalList(value) {
+  if (!value) return new Set();
+  const rawValues = Array.isArray(value) ? value : [value];
+  const names = [];
+  for (const rawValue of rawValues) {
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (Array.isArray(parsed)) names.push(...parsed);
+      else names.push(parsed);
+    } catch {
+      names.push(rawValue);
+    }
+  }
+  return new Set(names.map((name) => String(name || '').trim()).filter(Boolean));
+}
+
+function shouldRemoveFile(file, filesToRemove) {
+  return filesToRemove.has(file.storedName) || filesToRemove.has(file.originalName) || filesToRemove.has(file.megaSyncPath);
+}
+
+async function removeSelectedArtworkFiles(dir, files, filesToRemove) {
+  if (!filesToRemove.size) return;
+  await Promise.all(files.map(async (file) => {
+    if (!shouldRemoveFile(file, filesToRemove)) return;
+    const storedName = path.basename(file.storedName || file.originalName || '');
+    if (!storedName || storedName === 'registration-info.json') return;
+    try {
+      await fs.unlink(path.join(dir, storedName));
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
   }));
 }
 

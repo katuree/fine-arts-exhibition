@@ -586,6 +586,21 @@
     }
 
 
+    .preview-item.marked-for-removal {
+      opacity: 0.58;
+      border-style: dashed;
+      background: #f7f8f8;
+    }
+
+    .removed-file-note {
+      color: var(--soft-ink);
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+
     .current-files-panel .preview-grid {
       grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
     }
@@ -952,6 +967,8 @@
               const successTitleText = document.getElementById('success-title-text');
               let editingRegistrationId = null;
               let latestRegistrationInfo = null;
+              let currentRegistrationFiles = [];
+              let existingFilesToRemove = new Set();
               let artworkPreviewUrls = [];
               let selectedArtworkFiles = [];
 
@@ -993,13 +1010,32 @@
               }
 
               function clearCurrentFilesPreview() {
+                currentRegistrationFiles = [];
+                existingFilesToRemove.clear();
                 currentFilesContent.innerHTML = '';
                 currentFilesPanel.hidden = true;
               }
 
+              function fileRemovalKey(file) {
+                return file.storedName || file.originalName || file.megaSyncPath || '';
+              }
+
+              function removeExistingFile(fileKey) {
+                if (!fileKey) return;
+                existingFilesToRemove.add(fileKey);
+                renderCurrentFilesPreview(currentRegistrationFiles);
+              }
+
+              function undoRemoveExistingFile(fileKey) {
+                if (!fileKey) return;
+                existingFilesToRemove.delete(fileKey);
+                renderCurrentFilesPreview(currentRegistrationFiles);
+              }
+
               function renderCurrentFilesPreview(files = []) {
+                currentRegistrationFiles = Array.isArray(files) ? files : [];
                 currentFilesContent.innerHTML = '';
-                if (!files.length) {
+                if (!currentRegistrationFiles.length) {
                   currentFilesPanel.hidden = true;
                   return;
                 }
@@ -1007,10 +1043,15 @@
                 currentFilesPanel.hidden = false;
                 const previewGrid = document.createElement('div');
                 previewGrid.className = 'preview-grid';
+                const remainingCount = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file))).length;
 
-                files.forEach((file) => {
+                currentRegistrationFiles.forEach((file) => {
                   const previewItem = document.createElement('div');
                   previewItem.className = 'preview-item';
+                  const fileKey = fileRemovalKey(file);
+                  const isMarkedForRemoval = existingFilesToRemove.has(fileKey);
+                  if (isMarkedForRemoval) previewItem.classList.add('marked-for-removal');
+
                   const fileUrl = file.url || `${API_URL}/storage/${String(file.megaSyncPath || '').split('/').map(encodeURIComponent).join('/')}`;
                   const mimeType = file.mimeType || '';
                   const fileName = file.originalName || file.storedName || 'Artwork file';
@@ -1034,9 +1075,9 @@
                   caption.textContent = fileName;
                   previewItem.appendChild(caption);
 
+                  const actions = document.createElement('div');
+                  actions.className = 'current-file-actions';
                   if (fileUrl) {
-                    const actions = document.createElement('div');
-                    actions.className = 'current-file-actions';
                     const link = document.createElement('a');
                     link.className = 'current-file-link';
                     link.href = fileUrl;
@@ -1044,13 +1085,32 @@
                     link.rel = 'noopener';
                     link.textContent = 'Open';
                     actions.appendChild(link);
-                    previewItem.appendChild(actions);
+                  }
+
+                  const removeButton = document.createElement('button');
+                  removeButton.className = 'remove-preview-button';
+                  removeButton.type = 'button';
+                  removeButton.textContent = isMarkedForRemoval ? 'Undo Remove' : 'Remove';
+                  removeButton.setAttribute('aria-label', `${isMarkedForRemoval ? 'Undo remove' : 'Remove'} ${fileName}`);
+                  removeButton.addEventListener('click', () => {
+                    if (isMarkedForRemoval) undoRemoveExistingFile(fileKey);
+                    else removeExistingFile(fileKey);
+                  });
+                  actions.appendChild(removeButton);
+                  previewItem.appendChild(actions);
+
+                  if (isMarkedForRemoval) {
+                    const removedNote = document.createElement('p');
+                    removedNote.className = 'removed-file-note';
+                    removedNote.textContent = 'Will be removed after update';
+                    previewItem.appendChild(removedNote);
                   }
 
                   previewGrid.appendChild(previewItem);
                 });
 
                 currentFilesContent.appendChild(previewGrid);
+                editRegistrationStatus.textContent = `${remainingCount} current file${remainingCount === 1 ? '' : 's'} will remain. Upload new files to replace all current files.`;
               }
 
               function renderArtworkPreviews() {
@@ -1097,6 +1157,13 @@
               function updateArtworkPreview() {
                 submissionSuccess.hidden = true;
                 selectedArtworkFiles = Array.from(artworkFileInput.files || []);
+                if (selectedArtworkFiles.length) {
+                  existingFilesToRemove.clear();
+                  if (editingRegistrationId && currentRegistrationFiles.length) {
+                    editRegistrationStatus.textContent = 'New files selected. Updating will replace all current uploaded artwork files.';
+                    renderCurrentFilesPreview(currentRegistrationFiles);
+                  }
+                }
                 renderArtworkPreviews();
               }
               artworkFileInput.addEventListener('change', updateArtworkPreview);
@@ -1179,6 +1246,7 @@
                 setInputValue('dimensions', registration.artwork?.dimensions);
                 setInputValue('description', registration.artwork?.description);
                 selectedArtworkFiles = [];
+                existingFilesToRemove.clear();
                 artworkFileInput.value = '';
                 clearArtworkPreview();
                 renderCurrentFilesPreview(registration.files || []);
@@ -1242,6 +1310,13 @@
                   alert('Please select at least one artwork file');
                   return;
                 }
+                if (editingRegistrationId && selectedArtworkFiles.length === 0 && currentRegistrationFiles.length > 0) {
+                  const remainingFiles = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file)));
+                  if (!remainingFiles.length) {
+                    alert('At least one artwork file must remain. Upload a replacement before removing all existing files.');
+                    return;
+                  }
+                }
                 const submitBtn = form.querySelector('.register-button');
                 latestRegistrationInfo = null;
                 submissionSuccess.hidden = true;
@@ -1254,6 +1329,9 @@
                   const formData = new FormData(form);
                   formData.delete('artworkFiles[]');
                   selectedArtworkFiles.forEach((file) => formData.append('artworkFiles', file));
+                  if (editingRegistrationId && selectedArtworkFiles.length === 0 && existingFilesToRemove.size) {
+                    formData.set('removeExistingFiles', JSON.stringify(Array.from(existingFilesToRemove)));
+                  }
                   const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
                   const requestUrl = editingRegistrationId
                     ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
