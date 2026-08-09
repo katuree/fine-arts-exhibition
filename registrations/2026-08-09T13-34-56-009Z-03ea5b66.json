@@ -1,6 +1,6 @@
 {
   "id": "2026-08-09T13-34-56-009Z-03ea5b66",
-  "status": "registered",
+  "status": "approved",
   "createdAt": "2026-08-09T13:34:56.009Z",
   "storage": {
     "root": "Registered",
@@ -54,5 +54,13 @@
       "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
       "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2011_45_35%20AM.png"
     }
-  ]
+  ],
+  "reviewStatus": "Approved",
+  "reviewedAt": "2026-08-09T15:44:34.407Z",
+  "updatedAt": "2026-08-09T15:44:34.407Z",
+  "approvedCopy": {
+    "root": "Approved",
+    "megaSyncPath": "Approved/3rd Year/Y24FA0106 - GANESH KATURI/logo",
+    "fileCount": 4
+  }
 }
