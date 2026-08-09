@@ -24,6 +24,7 @@ let lastPublishedStatsJson = '';
 let statsPublishInFlight = false;
 
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+const ROLL_NUMBER_PATTERN = /^Y\d{2}FA\d{4}$/;
 
 await fs.mkdir(UPLOAD_DIR, { recursive: true });
 for (const rootName of [REGISTERED_ROOT, APPROVED_ROOT]) {
@@ -85,6 +86,11 @@ app.get('/api/stats', async (req, res) => {
 app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res) => {
   try {
     if (!(req.files || []).length) return res.status(400).json({ error: 'At least one artwork file is required.' });
+    req.body.rollNumber = normalizeRollNumber(req.body.rollNumber);
+    if (!isValidRollNumber(req.body.rollNumber)) {
+      await cleanupIncoming(req.files || []);
+      return res.status(400).json({ error: 'Enter a valid college roll number.' });
+    }
 
     const now = new Date().toISOString();
     const registrationId = `${now.replace(/[:.]/g, '-')}-${crypto.randomUUID().slice(0, 8)}`;
@@ -167,8 +173,14 @@ app.put('/api/registrations/:id', upload.array('artworkFiles', 10), async (req, 
     const existing = found.registration;
     const now = new Date().toISOString();
     const category = req.body.category === 'Other' ? req.body.otherCategory : req.body.category;
+    const rollNumber = normalizeRollNumber(req.body.rollNumber || existing.student?.rollNumber);
+    if (!isValidRollNumber(rollNumber)) {
+      await cleanupIncoming(req.files || []);
+      return res.status(400).json({ error: 'Enter a valid college roll number.' });
+    }
+    req.body.rollNumber = rollNumber;
     const yearFolder = normalizeYear(req.body.studentYear || existing.student?.studentYear);
-    const studentFolder = `${safePathSegment(req.body.rollNumber || existing.student?.rollNumber, 'No Roll No')} - ${safePathSegment(req.body.fullName || existing.student?.fullName, 'Unnamed Student')}`;
+    const studentFolder = `${safePathSegment(rollNumber, 'No Roll No')} - ${safePathSegment(req.body.fullName || existing.student?.fullName, 'Unnamed Student')}`;
     const artworkFolder = safePathSegment(req.body.artworkTitle || existing.artwork?.title, 'Untitled Artwork');
     const targetDir = path.join(UPLOAD_DIR, REGISTERED_ROOT, yearFolder, studentFolder, artworkFolder);
 
@@ -335,6 +347,15 @@ function shouldRemoveFile(file, filesToRemove) {
 
 function optionalBodyValue(body, key, fallback = '') {
   return Object.prototype.hasOwnProperty.call(body || {}, key) ? (body[key] || '') : fallback;
+}
+
+
+function normalizeRollNumber(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+function isValidRollNumber(value) {
+  return ROLL_NUMBER_PATTERN.test(normalizeRollNumber(value));
 }
 
 async function removeSelectedArtworkFiles(dir, files, filesToRemove) {
