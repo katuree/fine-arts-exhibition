@@ -456,6 +456,75 @@
       text-align: center;
     }
 
+
+
+    .submission-success {
+      display: grid;
+      gap: 18px;
+      margin-top: 24px;
+      padding: clamp(22px, 4vw, 34px);
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      background: #ffffff;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-success[hidden] { display: none; }
+
+    .submission-success-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: clamp(1.7rem, 4vw, 3.2rem);
+      line-height: 0.95;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+    }
+
+    .success-check {
+      display: inline-grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 1.4rem;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .success-field { display: grid; gap: 6px; }
+
+    .success-label {
+      color: var(--soft-ink);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .success-value {
+      font-size: clamp(1.1rem, 2vw, 1.55rem);
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .success-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--ink);
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         scroll-behavior: auto !important;
@@ -616,8 +685,24 @@
                       <button class="register-button" type="submit">Register Artwork</button>
                     </div>
 
-                    <p class="note">Uploads will be saved to TrueNAS / MEGA.</p>
+                    <p class="note" aria-live="polite">Uploads will be saved to TrueNAS / MEGA.</p>
                   </form>
+
+                  <section id="submission-success" class="submission-success" aria-live="polite" hidden>
+                    <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> Submission Successful</h2>
+                    <div class="success-field">
+                      <span class="success-label">Submission ID</span>
+                      <span class="success-value" id="success-submission-id"></span>
+                    </div>
+                    <div class="success-field">
+                      <span class="success-label">Artwork</span>
+                      <span class="success-value" id="success-artwork-title"></span>
+                    </div>
+                    <div class="success-field">
+                      <span class="success-label">Status</span>
+                      <span class="success-value success-status"><span class="status-dot" aria-hidden="true"></span><span id="success-status-text">Awaiting Review</span></span>
+                    </div>
+                  </section>
                 </div>
               </section>
             </main>
@@ -635,6 +720,10 @@
               const artworkPreviewContent = document.getElementById('artwork-preview-content');
               const form = document.getElementById('artwork-registration-form');
               const note = form.querySelector('.note');
+              const submissionSuccess = document.getElementById('submission-success');
+              const successSubmissionId = document.getElementById('success-submission-id');
+              const successArtworkTitle = document.getElementById('success-artwork-title');
+              const successStatusText = document.getElementById('success-status-text');
               let artworkPreviewUrls = [];
               let selectedArtworkFiles = [];
 
@@ -712,6 +801,7 @@
               }
 
               function updateArtworkPreview() {
+                submissionSuccess.hidden = true;
                 selectedArtworkFiles = Array.from(artworkFileInput.files || []);
                 renderArtworkPreviews();
               }
@@ -738,18 +828,25 @@
                 note.textContent = 'Uploading registration to TrueNAS...';
                 note.style.color = '';
                 try {
+                  submissionSuccess.hidden = true;
                   const formData = new FormData(form);
                   formData.delete('artworkFiles[]');
                   selectedArtworkFiles.forEach((file) => formData.append('artworkFiles', file));
+                  const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
                   const resp = await fetch(`${API_URL}/api/registrations`, { method: 'POST', body: formData });
                   const result = await resp.json().catch(() => ({}));
                   if (!resp.ok) throw new Error(result.error || 'Registration failed');
-                  note.textContent = `Artwork registered successfully. ID: ${result.id}`;
+                  successSubmissionId.textContent = result.id || result.registration?.id || 'Registered';
+                  successArtworkTitle.textContent = `"${submittedArtworkTitle}"`;
+                  successStatusText.textContent = 'Awaiting Review';
+                  submissionSuccess.hidden = false;
+                  note.textContent = 'Your artwork was uploaded and is awaiting review.';
                   note.style.color = 'green';
                   form.reset();
                   selectedArtworkFiles = [];
                   clearArtworkPreview();
                   updateOtherCategoryField();
+                  submissionSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } catch (error) {
                   console.error('Registration error:', error);
                   note.textContent = `Error: ${error.message}`;
