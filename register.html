@@ -457,6 +457,81 @@
     }
 
 
+    .edit-registration-panel {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding: clamp(18px, 3vw, 24px);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: #f8fafb;
+    }
+
+    .edit-registration-panel h2 {
+      font-size: clamp(1.35rem, 3vw, 2.2rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.035em;
+      text-transform: uppercase;
+    }
+
+    .edit-registration-panel p {
+      color: var(--soft-ink);
+      line-height: 1.6;
+    }
+
+    .edit-registration-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .edit-registration-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .small-action-button {
+      min-height: 46px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .small-action-button.secondary {
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .edit-mode-badge {
+      display: inline-flex;
+      width: fit-content;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .edit-status {
+      min-height: 22px;
+      color: var(--soft-ink);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+
 
     .submission-success {
       display: grid;
@@ -611,6 +686,15 @@
         grid-template-columns: 1fr;
       }
 
+
+      .edit-registration-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .small-action-button {
+        width: 100%;
+      }
+
       legend {
         font-size: clamp(2rem, 10vw, 3rem);
       }
@@ -633,6 +717,21 @@
       </div>
 
       <div class="form-card">
+        <section class="edit-registration-panel" id="edit-registration" aria-label="Edit existing registration">
+          <h2>Edit Existing Registration</h2>
+          <p>Already registered? Enter your Registration ID to load and update the application.</p>
+          <div class="edit-registration-controls">
+            <div class="field">
+              <label for="edit-registration-id">Registration ID</label>
+              <input id="edit-registration-id" type="text" autocomplete="off" placeholder="Paste Registration ID" />
+            </div>
+            <button class="small-action-button" type="button" id="load-registration-button">Load</button>
+            <button class="small-action-button secondary" type="button" id="cancel-edit-button" hidden>New Registration</button>
+          </div>
+          <span class="edit-mode-badge" id="edit-mode-badge" hidden>Edit Mode</span>
+          <p class="edit-status" id="edit-registration-status" aria-live="polite"></p>
+        </section>
+
         <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
           <fieldset>
             <legend>Student Information</legend>
@@ -728,7 +827,7 @@
                   </form>
 
                   <section id="submission-success" class="submission-success" aria-live="polite" hidden>
-                    <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> Registration Successful</h2>
+                    <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> <span id="success-title-text">Registration Successful</span></h2>
                     <div class="success-field">
                       <span class="success-label">Registration ID</span>
                       <span class="success-value" id="success-submission-id"></span>
@@ -769,6 +868,13 @@
               const successStatusText = document.getElementById('success-status-text');
               const saveRegistrationInfoButton = document.getElementById('save-registration-info');
               const printRegistrationInfoButton = document.getElementById('print-registration-info');
+              const editRegistrationIdInput = document.getElementById('edit-registration-id');
+              const loadRegistrationButton = document.getElementById('load-registration-button');
+              const cancelEditButton = document.getElementById('cancel-edit-button');
+              const editModeBadge = document.getElementById('edit-mode-badge');
+              const editRegistrationStatus = document.getElementById('edit-registration-status');
+              const successTitleText = document.getElementById('success-title-text');
+              let editingRegistrationId = null;
               let latestRegistrationInfo = null;
               let artworkPreviewUrls = [];
               let selectedArtworkFiles = [];
@@ -901,6 +1007,87 @@
               saveRegistrationInfoButton.addEventListener('click', saveRegistrationInfo);
               printRegistrationInfoButton.addEventListener('click', printRegistrationInfo);
 
+              function setInputValue(name, value) {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (input) input.value = value || '';
+              }
+
+              function setCategoryValue(category) {
+                const normalizedCategory = category || '';
+                const matchingCategory = form.querySelector(`input[name="category"][value="${CSS.escape(normalizedCategory)}"]`);
+                const otherRadio = document.getElementById('category-other');
+                if (matchingCategory) {
+                  matchingCategory.checked = true;
+                } else {
+                  otherRadio.checked = true;
+                  otherCategoryInput.value = normalizedCategory;
+                }
+                updateOtherCategoryField();
+              }
+
+              function setEditMode(registration) {
+                editingRegistrationId = registration.id;
+                editRegistrationIdInput.value = registration.id;
+                editModeBadge.hidden = false;
+                cancelEditButton.hidden = false;
+                artworkFileInput.required = false;
+                form.querySelector('.register-button').textContent = 'Update Registration';
+                editRegistrationStatus.textContent = `Editing registration ${registration.id}. Upload new files only if you want to replace the existing artwork files.`;
+                setInputValue('fullName', registration.student?.fullName);
+                setInputValue('rollNumber', registration.student?.rollNumber);
+                setInputValue('studentYear', registration.student?.studentYear);
+                setInputValue('artworkTitle', registration.artwork?.title);
+                setCategoryValue(registration.artwork?.category);
+                setInputValue('medium', registration.artwork?.medium);
+                setInputValue('dimensions', registration.artwork?.dimensions);
+                setInputValue('description', registration.artwork?.description);
+                selectedArtworkFiles = [];
+                artworkFileInput.value = '';
+                clearArtworkPreview();
+                note.textContent = 'Edit mode: current artwork files will stay unless you select new files.';
+                note.style.color = '';
+              }
+
+              function clearEditMode() {
+                editingRegistrationId = null;
+                editRegistrationIdInput.value = '';
+                editModeBadge.hidden = true;
+                cancelEditButton.hidden = true;
+                artworkFileInput.required = true;
+                form.querySelector('.register-button').textContent = 'Register Artwork';
+                editRegistrationStatus.textContent = '';
+                form.reset();
+                selectedArtworkFiles = [];
+                clearArtworkPreview();
+                updateOtherCategoryField();
+                note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
+                note.style.color = '';
+              }
+
+              async function loadExistingRegistration() {
+                const id = editRegistrationIdInput.value.trim();
+                if (!id) {
+                  editRegistrationStatus.textContent = 'Enter a Registration ID first.';
+                  return;
+                }
+                loadRegistrationButton.disabled = true;
+                editRegistrationStatus.textContent = 'Loading registration...';
+                try {
+                  const resp = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(id)}`, { cache: 'no-store' });
+                  const result = await resp.json().catch(() => ({}));
+                  if (!resp.ok) throw new Error(result.error || 'Registration not found');
+                  setEditMode(result.registration);
+                } catch (error) {
+                  console.error('Registration lookup error:', error);
+                  editRegistrationStatus.textContent = `Error: ${error.message}`;
+                } finally {
+                  loadRegistrationButton.disabled = false;
+                }
+              }
+
+              loadRegistrationButton.addEventListener('click', loadExistingRegistration);
+              cancelEditButton.addEventListener('click', clearEditMode);
+
               form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const requiredFields = ['fullName', 'rollNumber', 'studentYear', 'artworkTitle', 'category', 'medium'];
@@ -912,7 +1099,7 @@
                     return;
                   }
                 }
-                if (selectedArtworkFiles.length === 0) {
+                if (!editingRegistrationId && selectedArtworkFiles.length === 0) {
                   alert('Please select at least one artwork file');
                   return;
                 }
@@ -920,8 +1107,8 @@
                 latestRegistrationInfo = null;
                 submissionSuccess.hidden = true;
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Registering...';
-                note.textContent = 'Uploading registration to TrueNAS...';
+                submitBtn.textContent = editingRegistrationId ? 'Updating...' : 'Registering...';
+                note.textContent = editingRegistrationId ? 'Updating registration in TrueNAS...' : 'Uploading registration to TrueNAS...';
                 note.style.color = '';
                 try {
                   submissionSuccess.hidden = true;
@@ -929,25 +1116,39 @@
                   formData.delete('artworkFiles[]');
                   selectedArtworkFiles.forEach((file) => formData.append('artworkFiles', file));
                   const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
-                  const resp = await fetch(`${API_URL}/api/registrations`, { method: 'POST', body: formData });
+                  const requestUrl = editingRegistrationId
+                    ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
+                    : `${API_URL}/api/registrations`;
+                  const requestMethod = editingRegistrationId ? 'PUT' : 'POST';
+                  const resp = await fetch(requestUrl, { method: requestMethod, body: formData });
                   const result = await resp.json().catch(() => ({}));
-                  if (!resp.ok) throw new Error(result.error || 'Registration failed');
+                  if (!resp.ok) throw new Error(result.error || (editingRegistrationId ? 'Registration update failed' : 'Registration failed'));
                   latestRegistrationInfo = {
                     id: result.id || result.registration?.id || 'Registered',
                     artworkTitle: submittedArtworkTitle,
                     status: 'Awaiting Review',
                     savedAt: new Date().toLocaleString()
                   };
+                  successTitleText.textContent = editingRegistrationId ? 'Registration Updated' : 'Registration Successful';
                   successSubmissionId.textContent = latestRegistrationInfo.id;
                   successArtworkTitle.textContent = `"${latestRegistrationInfo.artworkTitle}"`;
                   successStatusText.textContent = latestRegistrationInfo.status;
                   submissionSuccess.hidden = false;
-                  note.textContent = 'Your artwork was uploaded and is awaiting review.';
+                  note.textContent = editingRegistrationId ? 'Your registration was updated and is awaiting review.' : 'Your artwork was uploaded and is awaiting review.';
                   note.style.color = 'green';
+                  const wasEditing = Boolean(editingRegistrationId);
                   form.reset();
                   selectedArtworkFiles = [];
                   clearArtworkPreview();
                   updateOtherCategoryField();
+                  if (wasEditing) {
+                    editingRegistrationId = null;
+                    editModeBadge.hidden = true;
+                    cancelEditButton.hidden = true;
+                    artworkFileInput.required = true;
+                    submitBtn.textContent = 'Register Artwork';
+                    editRegistrationStatus.textContent = 'Registration updated successfully.';
+                  }
                   submissionSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } catch (error) {
                   console.error('Registration error:', error);
@@ -960,6 +1161,13 @@
               });
 
               updateOtherCategoryField();
+
+              if (new URLSearchParams(window.location.search).get('mode') === 'edit') {
+                setTimeout(() => {
+                  document.getElementById('edit-registration')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  editRegistrationIdInput.focus();
+                }, 120);
+              }
             </script>
           </body>
           </html>

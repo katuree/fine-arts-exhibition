@@ -99,15 +99,7 @@ app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res
     for (const file of req.files || []) {
       const finalPath = await uniqueDestination(targetDir, file.originalname);
       await fs.rename(file.path, finalPath);
-      const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
-      files.push({
-        originalName: file.originalname,
-        storedName: path.basename(finalPath),
-        mimeType: file.mimetype,
-        size: file.size,
-        megaSyncPath: rel,
-        url: `${PUBLIC_BASE_URL}/storage/${rel.split('/').map(encodeURIComponent).join('/')}`,
-      });
+      files.push(fileMetadata(file, finalPath));
     }
 
     const registration = {
@@ -151,6 +143,167 @@ app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res
     res.status(500).json({ error: error.message || 'Registration failed' });
   }
 });
+
+
+app.get('/api/registrations/:id', async (req, res) => {
+  try {
+    const found = await findRegistrationById(req.params.id);
+    if (!found) return res.status(404).json({ error: 'Registration not found' });
+    res.json({ ok: true, id: found.registration.id, registration: found.registration });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message || 'Registration lookup failed' });
+  }
+});
+
+app.put('/api/registrations/:id', upload.array('artworkFiles', 10), async (req, res) => {
+  try {
+    const found = await findRegistrationById(req.params.id);
+    if (!found) {
+      await cleanupIncoming(req.files || []);
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    const existing = found.registration;
+    const now = new Date().toISOString();
+    const category = req.body.category === 'Other' ? req.body.otherCategory : req.body.category;
+    const yearFolder = normalizeYear(req.body.studentYear || existing.student?.studentYear);
+    const studentFolder = `${safePathSegment(req.body.rollNumber || existing.student?.rollNumber, 'No Roll No')} - ${safePathSegment(req.body.fullName || existing.student?.fullName, 'Unnamed Student')}`;
+    const artworkFolder = safePathSegment(req.body.artworkTitle || existing.artwork?.title, 'Untitled Artwork');
+    const targetDir = path.join(UPLOAD_DIR, REGISTERED_ROOT, yearFolder, studentFolder, artworkFolder);
+
+    if (path.resolve(found.dir) !== path.resolve(targetDir)) {
+      try {
+        await fs.access(targetDir);
+        await cleanupIncoming(req.files || []);
+        return res.status(409).json({ error: 'Another registration already uses that year/student/artwork folder.' });
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+      await fs.mkdir(path.dirname(targetDir), { recursive: true });
+      await fs.rename(found.dir, targetDir);
+    }
+
+    let files = Array.isArray(existing.files) ? existing.files : [];
+    if ((req.files || []).length) {
+      await removeArtworkFiles(targetDir);
+      files = [];
+      for (const file of req.files || []) {
+        const finalPath = await uniqueDestination(targetDir, file.originalname);
+        await fs.rename(file.path, finalPath);
+        const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
+        files.push(fileMetadata(file, finalPath));
+      }
+    } else {
+      files = files.map((file) => {
+        const finalPath = path.join(targetDir, file.storedName || file.originalName || 'artwork');
+        const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
+        return {
+          ...file,
+          megaSyncPath: rel,
+          url: `${PUBLIC_BASE_URL}/storage/${rel.split('/').map(encodeURIComponent).join('/')}`,
+        };
+      });
+    }
+
+    const registration = {
+      ...existing,
+      id: existing.id,
+      status: existing.status || 'registered',
+      createdAt: existing.createdAt,
+      updatedAt: now,
+      storage: {
+        root: REGISTERED_ROOT,
+        yearFolder,
+        studentFolder,
+        artworkFolder,
+        megaSyncPath: path.relative(UPLOAD_DIR, targetDir).replace(/\\/g, '/'),
+      },
+      student: {
+        fullName: req.body.fullName || '',
+        rollNumber: req.body.rollNumber || '',
+        studentYear: req.body.studentYear || '',
+      },
+      artwork: {
+        title: req.body.artworkTitle || '',
+        category: category || '',
+        medium: req.body.medium || '',
+        dimensions: req.body.dimensions || '',
+        description: req.body.description || '',
+      },
+      files,
+    };
+
+    await fs.writeFile(path.join(targetDir, 'registration-info.json'), JSON.stringify(registration, null, 2), 'utf-8');
+
+    let github = null;
+    if (GITHUB_TOKEN) {
+      github = await saveRegistrationToGitHub(registration.id, registration, 'Update');
+      await publishStatsToGitHub('registration-edit');
+    }
+
+    res.json({ ok: true, id: registration.id, registration, github });
+  } catch (error) {
+    await cleanupIncoming(req.files || []);
+    console.error(error);
+    res.status(500).json({ error: error.message || 'Registration update failed' });
+  }
+});
+
+
+function fileMetadata(file, finalPath) {
+  const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
+  return {
+    originalName: file.originalname,
+    storedName: path.basename(finalPath),
+    mimeType: file.mimetype,
+    size: file.size,
+    megaSyncPath: rel,
+    url: `${PUBLIC_BASE_URL}/storage/${rel.split('/').map(encodeURIComponent).join('/')}`,
+  };
+}
+
+async function findRegistrationById(id) {
+  const needle = String(id || '').trim();
+  if (!needle) return null;
+  const registeredDir = path.join(UPLOAD_DIR, REGISTERED_ROOT);
+  const stack = [registeredDir];
+
+  while (stack.length) {
+    const current = stack.pop();
+    let entries = [];
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+
+    for (const entry of entries) {
+      const entryPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(entryPath);
+      } else if (entry.name === 'registration-info.json') {
+        try {
+          const registration = JSON.parse(await fs.readFile(entryPath, 'utf-8'));
+          if (registration.id === needle) return { registration, infoPath: entryPath, dir: path.dirname(entryPath) };
+        } catch (error) {
+          console.warn(`Skipping unreadable registration info ${entryPath}:`, error.message);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+async function removeArtworkFiles(dir) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  await Promise.all(entries.map(async (entry) => {
+    if (!entry.isFile() || entry.name === 'registration-info.json') return;
+    await fs.unlink(path.join(dir, entry.name));
+  }));
+}
 
 
 function normalizeYear(value) {
@@ -286,13 +439,13 @@ async function createOrUpdateGitHubFile({ filePath, contentText, message }) {
   });
 }
 
-async function saveRegistrationToGitHub(id, registration) {
+async function saveRegistrationToGitHub(id, registration, action = 'Add') {
   const filePath = `registrations/${id}.json`;
   const result = await createOrUpdateGitHubFile({
     filePath,
     contentText: `${JSON.stringify(registration, null, 2)}
 `,
-    message: `Add artwork registration ${id}`,
+    message: `${action} artwork registration ${id}`,
   });
   return { path: filePath, htmlUrl: result.data.content?.html_url, commitUrl: result.data.commit?.html_url };
 }
