@@ -16,10 +16,10 @@
   },
   "artwork": {
     "title": "logo",
-    "category": "Printmaking",
+    "category": "Drawing",
     "medium": "ink",
-    "dimensions": "24X36",
-    "description": "a company logo"
+    "dimensions": "",
+    "description": ""
   },
   "files": [
     {
@@ -54,5 +54,6 @@
       "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
       "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2011_45_35%20AM.png"
     }
-  ]
+  ],
+  "updatedAt": "2026-08-09T12:11:21.208Z"
 }
