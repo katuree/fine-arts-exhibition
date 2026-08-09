@@ -931,7 +931,6 @@
                     </div>
                     <div class="success-actions">
                       <button class="success-action-button" type="button" id="save-registration-info">Save Registration Info</button>
-                      <button class="success-action-button secondary" type="button" id="print-registration-info">Print / Save PDF</button>
                     </div>
                   </section>
                 </div>
@@ -958,7 +957,6 @@
               const successArtworkTitle = document.getElementById('success-artwork-title');
               const successStatusText = document.getElementById('success-status-text');
               const saveRegistrationInfoButton = document.getElementById('save-registration-info');
-              const printRegistrationInfoButton = document.getElementById('print-registration-info');
               const editRegistrationIdInput = document.getElementById('edit-registration-id');
               const loadRegistrationButton = document.getElementById('load-registration-button');
               const cancelEditButton = document.getElementById('cancel-edit-button');
@@ -1326,15 +1324,10 @@
       color: #4f565b;
       line-height: 1.55;
     }
-    .print-note { margin: 14px 0 0; font-size: 13px; }
     @media (max-width: 620px) {
       body { padding: 14px; }
       .header, .content { padding: 24px; }
       .grid { grid-template-columns: 1fr; }
-    }
-    @media print {
-      body { display: block; padding: 0; background: #fff; }
-      .receipt { width: 100%; border-radius: 0; box-shadow: none; }
     }
   </style>
 </head>
@@ -1355,7 +1348,6 @@
       <footer class="footer">
         <span>Important</span>
         Please keep this receipt for your records. Your artwork registration is saved and awaiting review.
-        <p class="print-note">Tip: open this file in a browser and press Ctrl+P to save it as PDF.</p>
       </footer>
     </main>
   </article>
@@ -1377,13 +1369,7 @@
                 URL.revokeObjectURL(downloadUrl);
               }
 
-              function printRegistrationInfo() {
-                if (!latestRegistrationInfo) return;
-                window.print();
-              }
-
               saveRegistrationInfoButton.addEventListener('click', saveRegistrationInfo);
-              printRegistrationInfoButton.addEventListener('click', printRegistrationInfo);
 
               function setInputValue(name, value) {
                 const input = form.querySelector(`[name="${name}"]`);
