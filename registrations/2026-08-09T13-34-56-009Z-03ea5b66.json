@@ -1,0 +1,58 @@
+{
+  "id": "2026-08-09T13-34-56-009Z-03ea5b66",
+  "status": "registered",
+  "createdAt": "2026-08-09T13:34:56.009Z",
+  "storage": {
+    "root": "Registered",
+    "yearFolder": "3rd Year",
+    "studentFolder": "Y24FA0106 - GANESH KATURI",
+    "artworkFolder": "logo",
+    "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo"
+  },
+  "student": {
+    "fullName": "GANESH KATURI",
+    "rollNumber": "Y24FA0106",
+    "studentYear": "3rd Year"
+  },
+  "artwork": {
+    "title": "logo",
+    "category": "Printmaking",
+    "medium": "ink",
+    "dimensions": "24X36",
+    "description": "a company logo"
+  },
+  "files": [
+    {
+      "originalName": "JBS stamp (transparent).png",
+      "storedName": "JBS stamp (transparent).png",
+      "mimeType": "image/png",
+      "size": 542988,
+      "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/JBS stamp (transparent).png",
+      "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png"
+    },
+    {
+      "originalName": "JBS stamp.png",
+      "storedName": "JBS stamp.png",
+      "mimeType": "image/png",
+      "size": 420685,
+      "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/JBS stamp.png",
+      "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp.png"
+    },
+    {
+      "originalName": "ChatGPT Image Aug 2, 2026, 12_17_50 PM.png",
+      "storedName": "ChatGPT Image Aug 2, 2026, 12_17_50 PM.png",
+      "mimeType": "image/png",
+      "size": 1611865,
+      "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 12_17_50 PM.png",
+      "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2012_17_50%20PM.png"
+    },
+    {
+      "originalName": "ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
+      "storedName": "ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
+      "mimeType": "image/png",
+      "size": 1382738,
+      "megaSyncPath": "Registered/3rd Year/Y24FA0106 - GANESH KATURI/logo/ChatGPT Image Aug 2, 2026, 11_45_35 AM.png",
+      "url": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/ChatGPT%20Image%20Aug%202%2C%202026%2C%2011_45_35%20AM.png"
+    }
+  ]
+}
