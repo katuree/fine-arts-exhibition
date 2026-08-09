@@ -2,6 +2,7 @@ services:
   fine-arts-exhibition-api:
     build: .
     container_name: fine-arts-exhibition-api
+    user: "9100:9100"
     restart: unless-stopped
     ports:
       - "8088:8080"
