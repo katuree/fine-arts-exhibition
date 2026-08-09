@@ -83,6 +83,7 @@
   </main>
   <script>
     const API_URL = 'http://192.168.1.45:8088';
+
     function shouldUseLanApi() {
       const host = window.location.hostname;
       return window.location.protocol === 'file:'
@@ -91,13 +92,24 @@
         || host.startsWith('192.168.')
         || host.endsWith('.local');
     }
+
+    async function fetchStatsJson() {
+      const response = await fetch(`./stats.json?v=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`stats.json request failed: ${response.status}`);
+      return response.json();
+    }
+
+    async function fetchLanStats() {
+      const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
+      return response.json();
+    }
+
     async function updateAdminArtworkCount() {
       const count = document.getElementById('admin-artwork-count');
-      if (!count || !shouldUseLanApi()) return;
+      if (!count) return;
       try {
-        const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
-        const stats = await response.json();
+        const stats = shouldUseLanApi() ? await fetchLanStats() : await fetchStatsJson();
         count.textContent = String(Number(stats.totalArtworksRegistered || 0));
       } catch (error) {
         console.warn('Could not update admin artwork count', error);

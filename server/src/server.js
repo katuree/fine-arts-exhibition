@@ -19,6 +19,9 @@ const GITHUB_OWNER = process.env.GITHUB_OWNER || 'katuree';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'fine-arts-exhibition';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const STATS_PUBLISH_INTERVAL_SECONDS = Number(process.env.STATS_PUBLISH_INTERVAL_SECONDS || 300);
+let lastPublishedStatsJson = '';
+let statsPublishInFlight = false;
 
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 
@@ -61,13 +64,18 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/storage', express.static(UPLOAD_DIR));
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'fine-arts-exhibition-api', githubConfigured: Boolean(GITHUB_TOKEN), uploadDir: UPLOAD_DIR });
+  res.json({
+    ok: true,
+    service: 'fine-arts-exhibition-api',
+    githubConfigured: Boolean(GITHUB_TOKEN),
+    statsPublisherConfigured: Boolean(GITHUB_TOKEN),
+    uploadDir: UPLOAD_DIR,
+  });
 });
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const totalArtworksRegistered = await countArtworkTitleFolders(path.join(UPLOAD_DIR, REGISTERED_ROOT));
-    res.json({ ok: true, totalArtworksRegistered });
+    res.json(await buildStats('api'));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Stats failed' });
@@ -131,7 +139,10 @@ app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res
     await fs.writeFile(path.join(targetDir, 'registration-info.json'), JSON.stringify(registration, null, 2), 'utf-8');
 
     let github = null;
-    if (GITHUB_TOKEN) github = await saveRegistrationToGitHub(registrationId, registration);
+    if (GITHUB_TOKEN) {
+      github = await saveRegistrationToGitHub(registrationId, registration);
+      await publishStatsToGitHub('registration');
+    }
 
     res.status(201).json({ ok: true, id: registrationId, registration, github });
   } catch (error) {
@@ -214,17 +225,74 @@ async function countArtworkTitleFolders(registeredDir) {
   return total;
 }
 
-async function saveRegistrationToGitHub(id, registration) {
+async function buildStats(source = 'api') {
+  const totalArtworksRegistered = await countArtworkTitleFolders(path.join(UPLOAD_DIR, REGISTERED_ROOT));
+  return {
+    ok: true,
+    totalArtworksRegistered,
+    updatedAt: new Date().toISOString(),
+    source,
+  };
+}
+
+async function publishStatsToGitHub(source = 'periodic') {
+  if (!GITHUB_TOKEN || statsPublishInFlight) return null;
+
+  statsPublishInFlight = true;
+  try {
+    const stats = await buildStats(source);
+    const statsJson = `${JSON.stringify(stats, null, 2)}
+`;
+    if (statsJson === lastPublishedStatsJson) return { skipped: true, reason: 'unchanged' };
+
+    const result = await createOrUpdateGitHubFile({
+      filePath: 'stats.json',
+      contentText: statsJson,
+      message: `Update artwork stats (${stats.totalArtworksRegistered})`,
+    });
+    lastPublishedStatsJson = statsJson;
+    return { path: 'stats.json', htmlUrl: result.data.content?.html_url, commitUrl: result.data.commit?.html_url };
+  } catch (error) {
+    console.error('Could not publish stats.json to GitHub', error);
+    return { error: error.message || 'Stats publish failed' };
+  } finally {
+    statsPublishInFlight = false;
+  }
+}
+
+async function createOrUpdateGitHubFile({ filePath, contentText, message }) {
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  const filePath = `registrations/${id}.json`;
-  const content = Buffer.from(JSON.stringify(registration, null, 2)).toString('base64');
-  const result = await octokit.repos.createOrUpdateFileContents({
+  let sha;
+  try {
+    const existing = await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: filePath,
+      ref: GITHUB_BRANCH,
+    });
+    if (!Array.isArray(existing.data)) sha = existing.data.sha;
+  } catch (error) {
+    if (error.status !== 404) throw error;
+  }
+
+  return octokit.repos.createOrUpdateFileContents({
     owner: GITHUB_OWNER,
     repo: GITHUB_REPO,
     path: filePath,
-    message: `Add artwork registration ${id}`,
-    content,
+    message,
+    content: Buffer.from(contentText).toString('base64'),
     branch: GITHUB_BRANCH,
+    sha,
+  });
+}
+
+async function saveRegistrationToGitHub(id, registration) {
+  const filePath = `registrations/${id}.json`;
+  const result = await createOrUpdateGitHubFile({
+    filePath,
+    contentText: `${JSON.stringify(registration, null, 2)}
+`,
+    message: `Add artwork registration ${id}`,
   });
   return { path: filePath, htmlUrl: result.data.content?.html_url, commitUrl: result.data.commit?.html_url };
 }
@@ -233,6 +301,14 @@ app.use((error, req, res, next) => {
   console.error(error);
   res.status(400).json({ error: error.message || 'Bad request' });
 });
+
+if (GITHUB_TOKEN && STATS_PUBLISH_INTERVAL_SECONDS > 0) {
+  const intervalMs = Math.max(60, STATS_PUBLISH_INTERVAL_SECONDS) * 1000;
+  setInterval(() => {
+    publishStatsToGitHub('periodic').catch((error) => console.error(error));
+  }, intervalMs);
+  publishStatsToGitHub('startup').catch((error) => console.error(error));
+}
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Fine Arts Exhibition API listening on 0.0.0.0:${PORT}`);
