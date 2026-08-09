@@ -231,11 +231,11 @@ app.put('/api/registrations/:id', upload.array('artworkFiles', 10), async (req, 
         studentYear: req.body.studentYear || '',
       },
       artwork: {
-        title: req.body.artworkTitle || '',
-        category: category || '',
-        medium: req.body.medium || '',
-        dimensions: req.body.dimensions || '',
-        description: req.body.description || '',
+        title: req.body.artworkTitle || existing.artwork?.title || '',
+        category: category || existing.artwork?.category || '',
+        medium: req.body.medium || existing.artwork?.medium || '',
+        dimensions: optionalBodyValue(req.body, 'dimensions', existing.artwork?.dimensions || ''),
+        description: optionalBodyValue(req.body, 'description', existing.artwork?.description || ''),
       },
       files,
     };
@@ -330,6 +330,11 @@ function parseFileRemovalList(value) {
 
 function shouldRemoveFile(file, filesToRemove) {
   return filesToRemove.has(file.storedName) || filesToRemove.has(file.originalName) || filesToRemove.has(file.megaSyncPath);
+}
+
+
+function optionalBodyValue(body, key, fallback = '') {
+  return Object.prototype.hasOwnProperty.call(body || {}, key) ? (body[key] || '') : fallback;
 }
 
 async function removeSelectedArtworkFiles(dir, files, filesToRemove) {
