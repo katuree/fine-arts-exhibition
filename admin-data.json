@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 3,
-    "pending": 3,
+    "total": 1,
+    "pending": 1,
     "approved": 0,
     "rejected": 0
   },
@@ -20,38 +20,6 @@
       "imageUrl": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
       "fileName": "JBS stamp (transparent).png",
       "createdAt": "2026-08-09T13:34:56.009Z",
-      "updatedAt": ""
-    },
-    {
-      "id": "2026-08-09T11-37-17-297Z-a8f3cef3",
-      "student": "GANESH KATURI",
-      "rollNumber": "Y24FA0106",
-      "department": "Drawing",
-      "year": "3rd Year",
-      "artwork": "logo",
-      "medium": "ink",
-      "size": "",
-      "description": "a company logo",
-      "status": "Pending",
-      "imageUrl": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
-      "fileName": "JBS stamp (transparent).png",
-      "createdAt": "2026-08-09T11:37:17.297Z",
-      "updatedAt": "2026-08-09T12:41:46.019Z"
-    },
-    {
-      "id": "2026-08-09T10-49-00-915Z-bd8a6d01",
-      "student": "GANESH KATURI",
-      "rollNumber": "Y24FA0106",
-      "department": "Printmaking",
-      "year": "3rd Year",
-      "artwork": "logo",
-      "medium": "ink",
-      "size": "24X36",
-      "description": "logo of a company",
-      "status": "Pending",
-      "imageUrl": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
-      "fileName": "JBS stamp (transparent).png",
-      "createdAt": "2026-08-09T10:49:00.915Z",
       "updatedAt": ""
     }
   ]

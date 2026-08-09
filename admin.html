@@ -516,7 +516,7 @@
         <div>
           <p class="eyebrow">Art Exhibition Admin</p>
           <h1 class="admin-title" id="admin-title">Dashboard</h1>
-          <p class="admin-subtitle">Review registrations, inspect artwork details, and track pending, approved, and rejected entries.</p>
+          <p class="admin-subtitle">Review registrations, inspect artwork details, and track pending, approved, and rejected registrations.</p>
         </div>
         <div class="actions">
           <a class="secondary" href="student.html">Student Page</a>
@@ -543,15 +543,15 @@
         </article>
       </section>
 
-      <section class="dashboard-section" aria-labelledby="recent-submissions-title">
+      <section class="dashboard-section" aria-labelledby="recent-registrations-title">
         <div class="section-header">
           <div>
-            <h2 id="recent-submissions-title">Recent Submissions</h2>
-            <p>Click any artwork row to open the preview and review actions.</p>
+            <h2 id="recent-registrations-title">Recent Registrations</h2>
+            <p>Click any registration row to open the artwork preview and review actions.</p>
           </div>
         </div>
         <div class="table-wrap">
-          <table aria-label="Recent artwork submissions">
+          <table aria-label="Recent artwork registrations">
             <thead>
               <tr>
                 <th>Image</th>
@@ -561,7 +561,7 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody id="recent-submissions-body"></tbody>
+            <tbody id="recent-registrations-body"></tbody>
           </table>
         </div>
         <p class="dashboard-note" id="dashboard-note">Dashboard data loads from admin-data.json. Approval buttons update the screen only until a backend approval endpoint is added.</p>
@@ -612,13 +612,13 @@
     const adminPasswordInput = document.getElementById('admin-password');
     const adminAuthMessage = document.getElementById('admin-auth-message');
     const adminLogoutButton = document.getElementById('admin-logout-button');
-    const submissionsBody = document.getElementById('recent-submissions-body');
+    const registrationsBody = document.getElementById('recent-registrations-body');
     const dashboardNote = document.getElementById('dashboard-note');
     const modal = document.getElementById('artwork-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     const modalFullImage = document.getElementById('modal-full-image');
-    let dashboardSubmissions = [];
-    let selectedSubmissionId = null;
+    let dashboardRegistrations = [];
+    let selectedRegistrationId = null;
 
     async function sha256Hex(value) {
       const encoded = new TextEncoder().encode(value);
@@ -642,8 +642,8 @@
         .replaceAll("'", '&#39;');
     }
 
-    function calculateSummary(submissions) {
-      return submissions.reduce((summary, item) => {
+    function calculateSummary(registrations) {
+      return registrations.reduce((summary, item) => {
         summary.total += 1;
         const status = String(item.status || 'Pending').toLowerCase();
         if (status === 'approved') summary.approved += 1;
@@ -678,16 +678,16 @@
       return '<div class="thumb" aria-label="Artwork file available">IMG</div>';
     }
 
-    function renderSubmissions() {
-      submissionsBody.innerHTML = '';
-      if (!dashboardSubmissions.length) {
-        submissionsBody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
+    function renderRegistrations() {
+      registrationsBody.innerHTML = '';
+      if (!dashboardRegistrations.length) {
+        registrationsBody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
         return;
       }
-      dashboardSubmissions.forEach((item) => {
+      dashboardRegistrations.forEach((item) => {
         const row = document.createElement('tr');
         row.tabIndex = 0;
-        row.dataset.submissionId = item.id;
+        row.dataset.registrationId = item.id;
         row.innerHTML = `
           <td>${renderThumbnail(item)}</td>
           <td><p class="student-name">${escapeHtml(item.student)}</p><p class="muted-text">${escapeHtml(item.rollNumber)}</p></td>
@@ -701,14 +701,14 @@
             openArtworkModal(item.id);
           }
         });
-        submissionsBody.appendChild(row);
+        registrationsBody.appendChild(row);
       });
     }
 
     function renderDashboard(data) {
-      dashboardSubmissions = Array.isArray(data.submissions) ? data.submissions : [];
-      updateMetrics(data.summary || calculateSummary(dashboardSubmissions));
-      renderSubmissions();
+      dashboardRegistrations = Array.isArray(data.submissions) ? data.submissions : [];
+      updateMetrics(data.summary || calculateSummary(dashboardRegistrations));
+      renderRegistrations();
     }
 
     async function loadDashboardData() {
@@ -729,9 +729,9 @@
     }
 
     function openArtworkModal(id) {
-      const item = dashboardSubmissions.find((submission) => submission.id === id);
+      const item = dashboardRegistrations.find((registration) => registration.id === id);
       if (!item) return;
-      selectedSubmissionId = id;
+      selectedRegistrationId = id;
       setText('modal-artwork-title', item.artwork || 'Artwork');
       setText('modal-student', item.student);
       setText('modal-roll', item.rollNumber);
@@ -769,16 +769,16 @@
 
     function closeArtworkModal() {
       modal.hidden = true;
-      selectedSubmissionId = null;
+      selectedRegistrationId = null;
     }
 
     function applyReviewStatus(status) {
-      if (!selectedSubmissionId) return;
-      const item = dashboardSubmissions.find((submission) => submission.id === selectedSubmissionId);
+      if (!selectedRegistrationId) return;
+      const item = dashboardRegistrations.find((registration) => registration.id === selectedRegistrationId);
       if (!item) return;
       item.status = status;
-      updateMetrics(calculateSummary(dashboardSubmissions));
-      renderSubmissions();
+      updateMetrics(calculateSummary(dashboardRegistrations));
+      renderRegistrations();
       setText('modal-status', status);
       dashboardNote.textContent = 'Review status changed on this screen. Add a backend approval endpoint to save it permanently.';
     }
