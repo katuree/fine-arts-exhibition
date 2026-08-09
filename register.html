@@ -525,6 +525,45 @@
       background: var(--ink);
     }
 
+
+    .success-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .success-action-button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+    }
+
+    .success-action-button.secondary {
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .success-action-button:hover,
+    .success-action-button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 22px rgba(7, 7, 7, 0.14);
+      outline: 2px solid var(--focus);
+      outline-offset: 4px;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         scroll-behavior: auto !important;
@@ -702,6 +741,10 @@
                       <span class="success-label">Status</span>
                       <span class="success-value success-status"><span class="status-dot" aria-hidden="true"></span><span id="success-status-text">Awaiting Review</span></span>
                     </div>
+                    <div class="success-actions">
+                      <button class="success-action-button" type="button" id="save-registration-info">Save Registration Info</button>
+                      <button class="success-action-button secondary" type="button" id="print-registration-info">Print / Save PDF</button>
+                    </div>
                   </section>
                 </div>
               </section>
@@ -724,6 +767,9 @@
               const successSubmissionId = document.getElementById('success-submission-id');
               const successArtworkTitle = document.getElementById('success-artwork-title');
               const successStatusText = document.getElementById('success-status-text');
+              const saveRegistrationInfoButton = document.getElementById('save-registration-info');
+              const printRegistrationInfoButton = document.getElementById('print-registration-info');
+              let latestRegistrationInfo = null;
               let artworkPreviewUrls = [];
               let selectedArtworkFiles = [];
 
@@ -807,6 +853,50 @@
               }
               artworkFileInput.addEventListener('change', updateArtworkPreview);
 
+              function safeFilePart(value) {
+                return String(value || 'registration')
+                  .trim()
+                  .replace(/[^a-z0-9._-]+/gi, '-')
+                  .replace(/^-+|-+$/g, '')
+                  .slice(0, 80) || 'registration';
+              }
+
+              function buildRegistrationReceipt(info) {
+                return [
+                  'Fine Arts Exhibition ANU - Registration Receipt',
+                  '',
+                  `Registration ID: ${info.id}`,
+                  `Artwork: "${info.artworkTitle}"`,
+                  `Status: ${info.status}`,
+                  `Saved At: ${info.savedAt}`,
+                  '',
+                  'Please keep this receipt for your records.'
+                ].join('
+');
+              }
+
+              function saveRegistrationInfo() {
+                if (!latestRegistrationInfo) return;
+                const receiptText = buildRegistrationReceipt(latestRegistrationInfo);
+                const blob = new Blob([receiptText], { type: 'text/plain;charset=utf-8' });
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `${safeFilePart(latestRegistrationInfo.id)}-${safeFilePart(latestRegistrationInfo.artworkTitle)}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(downloadUrl);
+              }
+
+              function printRegistrationInfo() {
+                if (!latestRegistrationInfo) return;
+                window.print();
+              }
+
+              saveRegistrationInfoButton.addEventListener('click', saveRegistrationInfo);
+              printRegistrationInfoButton.addEventListener('click', printRegistrationInfo);
+
               form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const requiredFields = ['fullName', 'rollNumber', 'studentYear', 'artworkTitle', 'category', 'medium'];
@@ -823,6 +913,8 @@
                   return;
                 }
                 const submitBtn = form.querySelector('.register-button');
+                latestRegistrationInfo = null;
+                submissionSuccess.hidden = true;
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Registering...';
                 note.textContent = 'Uploading registration to TrueNAS...';
@@ -836,9 +928,15 @@
                   const resp = await fetch(`${API_URL}/api/registrations`, { method: 'POST', body: formData });
                   const result = await resp.json().catch(() => ({}));
                   if (!resp.ok) throw new Error(result.error || 'Registration failed');
-                  successSubmissionId.textContent = result.id || result.registration?.id || 'Registered';
-                  successArtworkTitle.textContent = `"${submittedArtworkTitle}"`;
-                  successStatusText.textContent = 'Awaiting Review';
+                  latestRegistrationInfo = {
+                    id: result.id || result.registration?.id || 'Registered',
+                    artworkTitle: submittedArtworkTitle,
+                    status: 'Awaiting Review',
+                    savedAt: new Date().toLocaleString()
+                  };
+                  successSubmissionId.textContent = latestRegistrationInfo.id;
+                  successArtworkTitle.textContent = `"${latestRegistrationInfo.artworkTitle}"`;
+                  successStatusText.textContent = latestRegistrationInfo.status;
                   submissionSuccess.hidden = false;
                   note.textContent = 'Your artwork was uploaded and is awaiting review.';
                   note.style.color = 'green';
