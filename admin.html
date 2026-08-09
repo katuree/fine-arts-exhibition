@@ -892,6 +892,10 @@
       for (const item of registrations) {
         try {
           const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(item.id)}`, { cache: 'no-store' });
+          if (response.status === 404) {
+            console.info(`Registration ${item.id} no longer exists on the live API; removing stale admin row.`);
+            continue;
+          }
           if (!response.ok) throw new Error(`Registration ${item.id} live lookup failed: ${response.status}`);
           const result = await response.json();
           hydrated.push(mergeLiveRegistration(item, result.registration));
