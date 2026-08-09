@@ -1,8 +1,8 @@
 {
   "summary": {
     "total": 1,
-    "pending": 1,
-    "approved": 0,
+    "pending": 0,
+    "approved": 1,
     "rejected": 0
   },
   "submissions": [
@@ -16,7 +16,7 @@
       "medium": "ink",
       "size": "24X36",
       "description": "a company logo",
-      "status": "Pending",
+      "status": "Approved",
       "imageUrl": "http://192.168.1.45:8088/storage/Registered/3rd%20Year/Y24FA0106%20-%20GANESH%20KATURI/logo/JBS%20stamp%20(transparent).png",
       "fileName": "JBS stamp (transparent).png",
       "files": [
@@ -50,7 +50,12 @@
         }
       ],
       "createdAt": "2026-08-09T13:34:56.009Z",
-      "updatedAt": ""
+      "updatedAt": "2026-08-09T15:44:34.407Z",
+      "approvedCopy": {
+        "root": "Approved",
+        "megaSyncPath": "Approved/3rd Year/Y24FA0106 - GANESH KATURI/logo",
+        "fileCount": 4
+      }
     }
   ]
 }
