@@ -532,6 +532,52 @@
     }
 
 
+    .current-files-panel {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .current-files-panel[hidden] {
+      display: none;
+    }
+
+    .current-files-title {
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .current-files-help {
+      color: var(--soft-ink);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .current-file-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .current-file-link {
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+
 
     .submission-success {
       display: grid;
@@ -812,6 +858,11 @@
               <p class="upload-preview-count" id="artwork-preview-count"></p>
               <div id="artwork-preview-content"></div>
             </div>
+            <div class="current-files-panel" id="current-files-panel" aria-live="polite" hidden>
+              <p class="current-files-title">Current Uploaded Artwork</p>
+              <p class="current-files-help">These files are already saved. They will stay unless you choose new files above.</p>
+              <div id="current-files-content"></div>
+            </div>
           </fieldset>
 
           <label class="confirm-row" for="ownership-confirmation">
@@ -860,6 +911,8 @@
               const artworkPreview = document.getElementById('artwork-preview');
               const artworkPreviewCount = document.getElementById('artwork-preview-count');
               const artworkPreviewContent = document.getElementById('artwork-preview-content');
+              const currentFilesPanel = document.getElementById('current-files-panel');
+              const currentFilesContent = document.getElementById('current-files-content');
               const form = document.getElementById('artwork-registration-form');
               const note = form.querySelector('.note');
               const submissionSuccess = document.getElementById('submission-success');
@@ -914,6 +967,67 @@
                 selectedArtworkFiles = selectedArtworkFiles.filter((_, index) => index !== indexToRemove);
                 syncArtworkFileInput();
                 renderArtworkPreviews();
+              }
+
+              function clearCurrentFilesPreview() {
+                currentFilesContent.innerHTML = '';
+                currentFilesPanel.hidden = true;
+              }
+
+              function renderCurrentFilesPreview(files = []) {
+                currentFilesContent.innerHTML = '';
+                if (!files.length) {
+                  currentFilesPanel.hidden = true;
+                  return;
+                }
+
+                currentFilesPanel.hidden = false;
+                const previewGrid = document.createElement('div');
+                previewGrid.className = 'preview-grid';
+
+                files.forEach((file) => {
+                  const previewItem = document.createElement('div');
+                  previewItem.className = 'preview-item';
+                  const fileUrl = file.url || `${API_URL}/storage/${String(file.megaSyncPath || '').split('/').map(encodeURIComponent).join('/')}`;
+                  const mimeType = file.mimeType || '';
+                  const fileName = file.originalName || file.storedName || 'Artwork file';
+
+                  if (mimeType.startsWith('image/') && fileUrl) {
+                    const image = document.createElement('img');
+                    image.src = fileUrl;
+                    image.alt = `Current uploaded artwork: ${fileName}`;
+                    image.loading = 'lazy';
+                    previewItem.appendChild(image);
+                  } else {
+                    const fileCard = document.createElement('div');
+                    fileCard.className = 'file-preview-card';
+                    fileCard.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${mimeType === 'application/pdf' ? 'PDF' : 'File'}</span>`;
+                    fileCard.querySelector('.file-preview-name').textContent = fileName;
+                    previewItem.appendChild(fileCard);
+                  }
+
+                  const caption = document.createElement('p');
+                  caption.className = 'preview-caption';
+                  caption.textContent = fileName;
+                  previewItem.appendChild(caption);
+
+                  if (fileUrl) {
+                    const actions = document.createElement('div');
+                    actions.className = 'current-file-actions';
+                    const link = document.createElement('a');
+                    link.className = 'current-file-link';
+                    link.href = fileUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    link.textContent = 'Open';
+                    actions.appendChild(link);
+                    previewItem.appendChild(actions);
+                  }
+
+                  previewGrid.appendChild(previewItem);
+                });
+
+                currentFilesContent.appendChild(previewGrid);
               }
 
               function renderArtworkPreviews() {
@@ -1044,6 +1158,7 @@
                 selectedArtworkFiles = [];
                 artworkFileInput.value = '';
                 clearArtworkPreview();
+                renderCurrentFilesPreview(registration.files || []);
                 note.textContent = 'Edit mode: current artwork files will stay unless you select new files.';
                 note.style.color = '';
               }
@@ -1059,6 +1174,7 @@
                 form.reset();
                 selectedArtworkFiles = [];
                 clearArtworkPreview();
+                clearCurrentFilesPreview();
                 updateOtherCategoryField();
                 note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
                 note.style.color = '';
@@ -1140,6 +1256,7 @@
                   form.reset();
                   selectedArtworkFiles = [];
                   clearArtworkPreview();
+                  clearCurrentFilesPreview();
                   updateOtherCategoryField();
                   if (wasEditing) {
                     editingRegistrationId = null;
