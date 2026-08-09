@@ -9,6 +9,9 @@ import { Octokit } from '@octokit/rest';
 const app = express();
 const PORT = Number(process.env.PORT || 8080);
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/data/uploads';
+const REGISTERED_ROOT = 'Registered';
+const APPROVED_ROOT = 'Approved';
+const YEAR_FOLDERS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 const MAX_FILE_MB = Number(process.env.MAX_FILE_MB || 50);
 
@@ -20,14 +23,17 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 
 await fs.mkdir(UPLOAD_DIR, { recursive: true });
-await fs.mkdir(path.join(UPLOAD_DIR, 'registrations'), { recursive: true });
-await fs.mkdir(path.join(UPLOAD_DIR, 'files'), { recursive: true });
+for (const rootName of [REGISTERED_ROOT, APPROVED_ROOT]) {
+  for (const year of YEAR_FOLDERS) {
+    await fs.mkdir(path.join(UPLOAD_DIR, rootName, year), { recursive: true });
+  }
+}
+await fs.mkdir(path.join(UPLOAD_DIR, '.incoming'), { recursive: true });
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const dir = path.join(UPLOAD_DIR, 'files', today);
+      const dir = path.join(UPLOAD_DIR, '.incoming');
       await fs.mkdir(dir, { recursive: true });
       cb(null, dir);
     } catch (error) {
@@ -36,7 +42,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const base = path.basename(file.originalname, ext).replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'artwork';
+    const base = safePathSegment(path.basename(file.originalname, ext), 'artwork').slice(0, 80);
     cb(null, `${Date.now()}-${crypto.randomUUID()}-${base}${ext}`);
   },
 });
@@ -52,36 +58,61 @@ const upload = multer({
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '1mb' }));
-app.use('/files', express.static(path.join(UPLOAD_DIR, 'files')));
+app.use('/storage', express.static(UPLOAD_DIR));
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'fine-arts-exhibition-api', githubConfigured: Boolean(GITHUB_TOKEN), uploadDir: UPLOAD_DIR });
 });
 
+app.get('/api/stats', async (req, res) => {
+  try {
+    const totalArtworksRegistered = await countArtworkTitleFolders(path.join(UPLOAD_DIR, REGISTERED_ROOT));
+    res.json({ ok: true, totalArtworksRegistered });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message || 'Stats failed' });
+  }
+});
+
 app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res) => {
   try {
-    const files = (req.files || []).map((file) => {
-      const rel = path.relative(UPLOAD_DIR, file.path).replace(/\\/g, '/');
-      return {
-        originalName: file.originalname,
-        storedName: file.filename,
-        mimeType: file.mimetype,
-        size: file.size,
-        megaSyncPath: rel,
-        url: `${PUBLIC_BASE_URL}/${rel}`,
-      };
-    });
-
-    if (!files.length) return res.status(400).json({ error: 'At least one artwork file is required.' });
+    if (!(req.files || []).length) return res.status(400).json({ error: 'At least one artwork file is required.' });
 
     const now = new Date().toISOString();
     const registrationId = `${now.replace(/[:.]/g, '-')}-${crypto.randomUUID().slice(0, 8)}`;
     const category = req.body.category === 'Other' ? req.body.otherCategory : req.body.category;
+    const yearFolder = normalizeYear(req.body.studentYear);
+    const studentFolder = `${safePathSegment(req.body.rollNumber, 'No Roll No')} - ${safePathSegment(req.body.fullName, 'Unnamed Student')}`;
+    const artworkFolder = safePathSegment(req.body.artworkTitle, 'Untitled Artwork');
+    const targetDir = path.join(UPLOAD_DIR, REGISTERED_ROOT, yearFolder, studentFolder, artworkFolder);
+    await fs.mkdir(targetDir, { recursive: true });
+
+    const files = [];
+    for (const file of req.files || []) {
+      const finalPath = await uniqueDestination(targetDir, file.originalname);
+      await fs.rename(file.path, finalPath);
+      const rel = path.relative(UPLOAD_DIR, finalPath).replace(/\\/g, '/');
+      files.push({
+        originalName: file.originalname,
+        storedName: path.basename(finalPath),
+        mimeType: file.mimetype,
+        size: file.size,
+        megaSyncPath: rel,
+        url: `${PUBLIC_BASE_URL}/storage/${rel.split('/').map(encodeURIComponent).join('/')}`,
+      });
+    }
 
     const registration = {
       id: registrationId,
-      status: 'pending',
+      status: 'registered',
       createdAt: now,
+      storage: {
+        root: REGISTERED_ROOT,
+        yearFolder,
+        studentFolder,
+        artworkFolder,
+        megaSyncPath: path.relative(UPLOAD_DIR, targetDir).replace(/\\/g, '/'),
+      },
       student: {
         fullName: req.body.fullName || '',
         rollNumber: req.body.rollNumber || '',
@@ -97,18 +128,91 @@ app.post('/api/registrations', upload.array('artworkFiles', 10), async (req, res
       files,
     };
 
-    const localMetaPath = path.join(UPLOAD_DIR, 'registrations', `${registrationId}.json`);
-    await fs.writeFile(localMetaPath, JSON.stringify(registration, null, 2), 'utf-8');
+    await fs.writeFile(path.join(targetDir, 'registration-info.json'), JSON.stringify(registration, null, 2), 'utf-8');
 
     let github = null;
     if (GITHUB_TOKEN) github = await saveRegistrationToGitHub(registrationId, registration);
 
     res.status(201).json({ ok: true, id: registrationId, registration, github });
   } catch (error) {
+    await cleanupIncoming(req.files || []);
     console.error(error);
     res.status(500).json({ error: error.message || 'Registration failed' });
   }
 });
+
+
+function normalizeYear(value) {
+  const text = String(value || '').toLowerCase();
+  if (text.includes('1')) return '1st Year';
+  if (text.includes('2')) return '2nd Year';
+  if (text.includes('3')) return '3rd Year';
+  if (text.includes('4')) return '4th Year';
+  const direct = YEAR_FOLDERS.find((year) => year.toLowerCase() === text.trim());
+  return direct || 'Unknown Year';
+}
+
+function safePathSegment(value, fallback) {
+  const cleaned = String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[<>:"/\\|?*\x00-\x1f]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^-+|-+$/g, '')
+    .trim()
+    .slice(0, 120);
+  return cleaned || fallback;
+}
+
+async function uniqueDestination(dir, originalName) {
+  const ext = path.extname(originalName).toLowerCase();
+  const base = safePathSegment(path.basename(originalName, ext), 'artwork');
+  let candidate = path.join(dir, `${base}${ext}`);
+  for (let index = 2; ; index += 1) {
+    try {
+      await fs.access(candidate);
+      candidate = path.join(dir, `${base}-${index}${ext}`);
+    } catch {
+      return candidate;
+    }
+  }
+}
+
+async function cleanupIncoming(files) {
+  await Promise.all(files.map(async (file) => {
+    try {
+      await fs.unlink(file.path);
+    } catch {
+      // Ignore cleanup errors.
+    }
+  }));
+}
+
+async function countArtworkTitleFolders(registeredDir) {
+  let total = 0;
+  let yearEntries = [];
+  try {
+    yearEntries = await fs.readdir(registeredDir, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return 0;
+    throw error;
+  }
+
+  for (const yearEntry of yearEntries) {
+    if (!yearEntry.isDirectory()) continue;
+    const yearDir = path.join(registeredDir, yearEntry.name);
+    const studentEntries = await fs.readdir(yearDir, { withFileTypes: true });
+
+    for (const studentEntry of studentEntries) {
+      if (!studentEntry.isDirectory()) continue;
+      const studentDir = path.join(yearDir, studentEntry.name);
+      const artworkEntries = await fs.readdir(studentDir, { withFileTypes: true });
+      total += artworkEntries.filter((entry) => entry.isDirectory()).length;
+    }
+  }
+
+  return total;
+}
 
 async function saveRegistrationToGitHub(id, registration) {
   const octokit = new Octokit({ auth: GITHUB_TOKEN });

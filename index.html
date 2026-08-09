@@ -514,5 +514,26 @@
       <p>Built for student creativity, review, and public showcase.</p>
     </footer>
   </main>
+
+  <script>
+    const API_URL = 'http://192.168.1.45:8088';
+
+    async function updateArtworkCount() {
+      const counter = document.getElementById('artwork-count');
+      if (!counter) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
+        const stats = await response.json();
+        const total = Number(stats.totalArtworksRegistered || 0);
+        counter.textContent = String(total);
+      } catch (error) {
+        console.warn('Could not update artwork count', error);
+      }
+    }
+
+    updateArtworkCount();
+  </script>
 </body>
 </html>
