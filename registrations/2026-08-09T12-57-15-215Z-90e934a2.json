@@ -1,0 +1,34 @@
+{
+  "id": "2026-08-09T12-57-15-215Z-90e934a2",
+  "status": "registered",
+  "createdAt": "2026-08-09T12:57:15.215Z",
+  "storage": {
+    "root": "Registered",
+    "yearFolder": "1st Year",
+    "studentFolder": "OUTSIDER123 - Outsider Test",
+    "artworkFolder": "Should Not Save",
+    "megaSyncPath": "Registered/1st Year/OUTSIDER123 - Outsider Test/Should Not Save"
+  },
+  "student": {
+    "fullName": "Outsider Test",
+    "rollNumber": "OUTSIDER123",
+    "studentYear": "1st Year"
+  },
+  "artwork": {
+    "title": "Should Not Save",
+    "category": "Drawing",
+    "medium": "Ink",
+    "dimensions": "",
+    "description": ""
+  },
+  "files": [
+    {
+      "originalName": "x.png",
+      "storedName": "x.png",
+      "mimeType": "image/png",
+      "size": 3,
+      "megaSyncPath": "Registered/1st Year/OUTSIDER123 - Outsider Test/Should Not Save/x.png",
+      "url": "http://192.168.1.45:8088/storage/Registered/1st%20Year/OUTSIDER123%20-%20Outsider%20Test/Should%20Not%20Save/x.png"
+    }
+  ]
+}
