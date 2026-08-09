@@ -794,9 +794,14 @@
               }
 
               function syncArtworkFileInput() {
-                const dataTransfer = new DataTransfer();
-                selectedArtworkFiles.forEach((file) => dataTransfer.items.add(file));
-                artworkFileInput.files = dataTransfer.files;
+                if (typeof DataTransfer === 'undefined') return;
+                try {
+                  const dataTransfer = new DataTransfer();
+                  selectedArtworkFiles.forEach((file) => dataTransfer.items.add(file));
+                  artworkFileInput.files = dataTransfer.files;
+                } catch (error) {
+                  console.warn('Could not sync edited file list back to input:', error);
+                }
               }
 
               function removeArtworkFile(indexToRemove) {
@@ -871,8 +876,7 @@
                   `Saved At: ${info.savedAt}`,
                   '',
                   'Please keep this receipt for your records.'
-                ].join('
-');
+                ].join('\\n');
               }
 
               function saveRegistrationInfo() {
