@@ -746,7 +746,6 @@
 
   <script>
     const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
-    const ADMIN_AUTH_KEY = 'fineArtsAdminAuthenticated';
     const API_URL = 'http://192.168.1.45:8088';
     const adminLoginPanel = document.getElementById('admin-login-panel');
     const adminPanel = document.getElementById('admin-panel');
@@ -1094,16 +1093,13 @@
       adminAuthMessage.textContent = '';
       const passwordHash = await sha256Hex(adminPasswordInput.value);
       if (passwordHash !== ADMIN_PASSWORD_HASH) {
-        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showLoginPanel('Incorrect password.');
         return;
       }
-      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
       showAdminPanel();
     });
 
     adminLogoutButton.addEventListener('click', () => {
-      sessionStorage.removeItem(ADMIN_AUTH_KEY);
       showLoginPanel();
     });
 
@@ -1126,11 +1122,8 @@
       button.addEventListener('click', () => applyReviewStatus(button.dataset.reviewAction));
     });
 
-    if (sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true') {
-      showAdminPanel();
-    } else {
-      showLoginPanel();
-    }
+    // Always require the password every time admin.html is opened.
+    showLoginPanel();
   </script>
 </body>
 </html>
