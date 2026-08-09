@@ -115,25 +115,33 @@
     .admin-password-form {
       margin-top: 32px;
       display: grid;
-      gap: 14px;
+      gap: 16px;
       text-align: left;
     }
 
+    .admin-password-form > div {
+      display: grid;
+      gap: 9px;
+    }
+
     label, .small-label {
+      display: block;
       font-size: 12px;
       font-weight: 950;
       letter-spacing: 0.1em;
+      line-height: 1.2;
       text-transform: uppercase;
     }
 
     input[type="password"] {
       width: 100%;
-      border: 1px solid #bfc8ca;
-      border-radius: 12px;
+      border: 2px solid #050505;
+      border-radius: 14px;
       padding: 14px 16px;
       color: var(--ink);
       font: inherit;
       font-size: 16px;
+      line-height: 1.3;
     }
 
     .auth-message {
@@ -638,9 +646,6 @@
       <button type="submit">Open Admin</button>
       <p class="auth-message" id="admin-auth-message" aria-live="polite"></p>
     </form>
-    <div class="actions">
-      <a class="secondary" href="index.html">Back</a>
-    </div>
   </main>
 
   <div class="admin-shell" id="admin-panel" hidden>
