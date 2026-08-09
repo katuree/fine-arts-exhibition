@@ -405,6 +405,7 @@
 
     .preview-frame {
       min-height: 320px;
+      height: clamp(320px, 52vh, 620px);
       display: grid;
       place-items: center;
       border: 1px solid var(--line);
@@ -416,9 +417,66 @@
     .preview-frame img {
       width: 100%;
       height: 100%;
-      max-height: 520px;
       object-fit: contain;
       background: #fff;
+      cursor: zoom-in;
+    }
+
+    .image-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      padding: clamp(14px, 3vw, 28px);
+      background: rgba(5, 5, 5, 0.94);
+    }
+
+    .image-lightbox[hidden] {
+      display: none !important;
+    }
+
+    .lightbox-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--paper);
+    }
+
+    .lightbox-title {
+      margin: 0;
+      overflow: hidden;
+      color: var(--paper);
+      font-weight: 950;
+      letter-spacing: -0.03em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lightbox-close {
+      border-color: var(--paper);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .lightbox-image-wrap {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      background: #050505;
+    }
+
+    .lightbox-image-wrap img {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
 
     .preview-fallback {
@@ -603,6 +661,14 @@
     </article>
   </section>
 
+  <section class="image-lightbox" id="image-lightbox" aria-modal="true" role="dialog" aria-labelledby="lightbox-title" hidden>
+    <div class="lightbox-topbar">
+      <p class="lightbox-title" id="lightbox-title">Artwork Image</p>
+      <button class="lightbox-close" type="button" id="close-lightbox-button">Close Full Screen</button>
+    </div>
+    <div class="lightbox-image-wrap" id="lightbox-image-wrap"></div>
+  </section>
+
   <script>
     const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
     const ADMIN_AUTH_KEY = 'fineArtsAdminAuthenticated';
@@ -617,6 +683,10 @@
     const modal = document.getElementById('artwork-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     const modalFullImage = document.getElementById('modal-full-image');
+    const imageLightbox = document.getElementById('image-lightbox');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxImageWrap = document.getElementById('lightbox-image-wrap');
+    const closeLightboxButton = document.getElementById('close-lightbox-button');
     let dashboardRegistrations = [];
     let selectedRegistrationId = null;
 
@@ -672,7 +742,7 @@
     }
 
     function renderThumbnail(item) {
-      if (canAutoLoadImage(item.imageUrl)) {
+      if (item.imageUrl) {
         return `<div class="thumb"><img src="${escapeHtml(item.imageUrl)}" alt="Artwork thumbnail for ${escapeHtml(item.artwork)}" loading="lazy" onerror="const holder=this.parentElement; this.remove(); if (holder) holder.textContent='IMG';"></div>`;
       }
       return '<div class="thumb" aria-label="Artwork file available">IMG</div>';
@@ -728,6 +798,26 @@
       document.getElementById(id).textContent = value || '—';
     }
 
+    function openImageLightbox(url, title = 'Artwork Image') {
+      if (!url) return;
+      lightboxTitle.textContent = title || 'Artwork Image';
+      lightboxImageWrap.innerHTML = '';
+      const image = document.createElement('img');
+      image.src = url;
+      image.alt = title ? `Full screen artwork: ${title}` : 'Full screen artwork image';
+      image.onerror = () => {
+        lightboxImageWrap.innerHTML = '<div class="preview-fallback">Full-screen image could not be loaded. Use View Full Image to open it directly.</div>';
+      };
+      lightboxImageWrap.appendChild(image);
+      imageLightbox.hidden = false;
+      closeLightboxButton.focus();
+    }
+
+    function closeImageLightbox() {
+      imageLightbox.hidden = true;
+      lightboxImageWrap.innerHTML = '';
+    }
+
     function openArtworkModal(id) {
       const item = dashboardRegistrations.find((registration) => registration.id === id);
       if (!item) return;
@@ -744,18 +834,16 @@
       setText('modal-description', item.description);
       const previewFrame = document.getElementById('modal-preview-frame');
       previewFrame.innerHTML = '';
-      if (item.imageUrl && canAutoLoadImage(item.imageUrl)) {
+      if (item.imageUrl) {
         const image = document.createElement('img');
         image.src = item.imageUrl;
         image.alt = `Artwork preview: ${item.artwork}`;
+        image.title = 'Tap to view full screen';
+        image.addEventListener('click', () => openImageLightbox(item.imageUrl, item.artwork || 'Artwork Image'));
         image.onerror = () => {
           previewFrame.innerHTML = '<div class="preview-fallback">Preview image could not be loaded from the storage URL. Use View Full Image to open it directly.</div>';
         };
         previewFrame.appendChild(image);
-        modalFullImage.hidden = false;
-        modalFullImage.href = item.imageUrl;
-      } else if (item.imageUrl) {
-        previewFrame.innerHTML = '<div class="preview-fallback">Artwork file is available. Use View Full Image to open it directly from storage.</div>';
         modalFullImage.hidden = false;
         modalFullImage.href = item.imageUrl;
       } else {
@@ -818,10 +906,18 @@
     });
 
     closeModalButton.addEventListener('click', closeArtworkModal);
+    closeLightboxButton.addEventListener('click', closeImageLightbox);
     modal.addEventListener('click', (event) => {
       if (event.target === modal) closeArtworkModal();
     });
+    imageLightbox.addEventListener('click', (event) => {
+      if (event.target === imageLightbox) closeImageLightbox();
+    });
     document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !imageLightbox.hidden) {
+        closeImageLightbox();
+        return;
+      }
       if (event.key === 'Escape' && !modal.hidden) closeArtworkModal();
     });
     document.querySelectorAll('[data-review-action]').forEach((button) => {
