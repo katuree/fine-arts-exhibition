@@ -1,15 +1,15 @@
 {
   "name": "fine-arts-exhibition-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/server.js"
   },
   "dependencies": {
-    "@octokit/rest": "^21.1.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "megajs": "^1.3.10",
     "multer": "^2.2.0"
   }
 }
