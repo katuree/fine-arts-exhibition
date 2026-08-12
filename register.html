@@ -835,10 +835,6 @@
                 <input id="full-name" name="fullName" type="text" autocomplete="name" required />
               </div>
               <div class="field">
-                <label for="roll-number">Roll Number <span class="required">*</span></label>
-                <input id="roll-number" name="rollNumber" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" required />
-              </div>
-              <div class="field">
                 <label for="student-year">Year <span class="required">*</span></label>
                 <select id="student-year" name="studentYear" required>
                   <option value="" selected disabled>Select year</option>
@@ -950,7 +946,6 @@
               // TrueNAS API endpoint. This API runs on TrueNAS and stores files in the MEGA sync folder.
               // If you expose it publicly later, replace this LAN URL with the public HTTPS URL.
               const API_URL = 'http://192.168.1.45:8088';
-              const ROLL_NUMBER_PATTERN = /^Y\d{2}FA\d{4}$/;
 
               const categoryInputs = document.querySelectorAll('input[name="category"]');
               const otherCategoryField = document.getElementById('other-category-field');
@@ -993,32 +988,6 @@
               }
 
               categoryInputs.forEach((input) => input.addEventListener('change', updateOtherCategoryField));
-
-              function normalizeRollNumber(value) {
-                return String(value || '').trim().toUpperCase();
-              }
-
-              function isValidRollNumber(value) {
-                return ROLL_NUMBER_PATTERN.test(normalizeRollNumber(value));
-              }
-
-              function validateRollNumberField() {
-                const input = form.querySelector('[name="rollNumber"]');
-                if (!input) return true;
-                input.value = normalizeRollNumber(input.value);
-                if (isValidRollNumber(input.value)) {
-                  input.setCustomValidity('');
-                  return true;
-                }
-                input.setCustomValidity('Enter a valid college roll number.');
-                input.reportValidity();
-                return false;
-              }
-
-              form.querySelector('[name="rollNumber"]')?.addEventListener('input', (event) => {
-                event.target.value = normalizeRollNumber(event.target.value);
-                event.target.setCustomValidity('');
-              });
 
               function clearArtworkPreview() {
                 artworkPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -1225,7 +1194,6 @@
                 const fields = [
                   ['Registration ID', info.id],
                   ['Student Name', info.studentName],
-                  ['Roll Number', info.rollNumber],
                   ['Year', info.studentYear],
                   ['Artwork Title', info.artworkTitle],
                   ['Category', info.category],
@@ -1437,7 +1405,6 @@
                 form.querySelector('.register-button').textContent = 'Update Registration';
                 editRegistrationStatus.textContent = `Editing registration ${registration.id}. Upload new files only if you want to replace the existing artwork files.`;
                 setInputValue('fullName', registration.student?.fullName);
-                setInputValue('rollNumber', registration.student?.rollNumber);
                 setInputValue('studentYear', registration.student?.studentYear);
                 setInputValue('artworkTitle', registration.artwork?.title);
                 setCategoryValue(registration.artwork?.category);
