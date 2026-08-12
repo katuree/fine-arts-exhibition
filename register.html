@@ -828,22 +828,29 @@
 
         <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
           <fieldset>
-            <legend>Student Information</legend>
+            <legend>Artist Information</legend>
             <div class="field-grid">
               <div class="field">
                 <label for="full-name">Full Name <span class="required">*</span></label>
                 <input id="full-name" name="fullName" type="text" autocomplete="name" required />
               </div>
               <div class="field">
-                <label for="student-year">Year <span class="required">*</span></label>
+                <label for="student-year">Batch <span class="required">*</span></label>
                 <select id="student-year" name="studentYear" required>
-                  <option value="" selected disabled>Select year</option>
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
+                  <option value="" selected disabled>Select batch</option>
+                  <option value="2020 Batch">2020 Batch</option>
+                  <option value="2021 Batch">2021 Batch</option>
+                  <option value="2022 Batch">2022 Batch</option>
+                  <option value="2023 Batch">2023 Batch</option>
+                  <option value="2024 Batch">2024 Batch</option>
+                  <option value="2025 Batch">2025 Batch</option>
                 </select>
               </div>
+            </div>
+
+            <div class="field">
+              <label for="profile-picture">Profile Picture</label>
+              <input id="profile-picture" name="profilePicture" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
             </div>
           </fieldset>
 
@@ -1465,7 +1472,7 @@
 
               form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const requiredFields = ['fullName', 'rollNumber', 'studentYear', 'artworkTitle', 'category', 'medium'];
+                const requiredFields = ['fullName', 'studentYear', 'artworkTitle', 'category', 'medium'];
                 for (const field of requiredFields) {
                   const input = form.querySelector(`[name="${field}"]`);
                   if (input && !input.value.trim()) {
@@ -1474,7 +1481,6 @@
                     return;
                   }
                 }
-                if (!validateRollNumberField()) return;
                 if (!editingRegistrationId && selectedArtworkFiles.length === 0) {
                   alert('Please select at least one artwork file');
                   return;
@@ -1513,7 +1519,6 @@
                   latestRegistrationInfo = {
                     id: result.id || savedRegistration.id || 'Registered',
                     studentName: savedRegistration.student?.fullName || formData.get('fullName') || '',
-                    rollNumber: savedRegistration.student?.rollNumber || formData.get('rollNumber') || '',
                     studentYear: savedRegistration.student?.studentYear || formData.get('studentYear') || '',
                     artworkTitle: savedRegistration.artwork?.title || submittedArtworkTitle,
                     category: savedRegistration.artwork?.category || formData.get('category') || '',
