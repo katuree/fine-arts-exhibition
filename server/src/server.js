@@ -1,17 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import fs from 'fs/promises';
+import fs from 'fs';
+import fsp from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
-import { Octokit } from '@octokit/rest';
+import os from 'os';
+import { Storage } from 'megajs';
 
 const app = express();
-const PORT = Number(process.env.PORT || 8080);
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/data/uploads';
 
-const REGISTERED_ROOT = 'Registered';
-const APPROVED_ROOT = 'Approved';
+const PORT = Number(process.env.PORT || 8080);
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+
+const MEGA_EMAIL = String(process.env.MEGA_EMAIL || '').trim();
+const MEGA_PASSWORD = String(process.env.MEGA_PASSWORD || '');
+const MEGA_ROOT_FOLDER = String(process.env.MEGA_ROOT_FOLDER || 'Fine Arts Exhibition').trim();
+
+const MAX_FILE_MB = Number(process.env.MAX_FILE_MB || 50);
 
 const BATCH_FOLDERS = [
   '2020 Batch',
@@ -22,1182 +28,735 @@ const BATCH_FOLDERS = [
   '2025 Batch',
 ];
 
-const PUBLIC_BASE_URL = (
-  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`
-).replace(/\/$/, '');
-
-const MAX_FILE_MB = Number(process.env.MAX_FILE_MB || 50);
-
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'katuree';
-const GITHUB_REPO = process.env.GITHUB_REPO || 'fine-arts-exhibition';
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-
-const STATS_PUBLISH_INTERVAL_SECONDS = Number(
-  process.env.STATS_PUBLISH_INTERVAL_SECONDS || 300
-);
-
-let lastPublishedStatsJson = '';
-let statsPublishInFlight = false;
-
-const artworkMimeTypes = new Set([
+const ARTWORK_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'application/pdf',
 ]);
 
-const profileMimeTypes = new Set([
+const PROFILE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
 ]);
 
-await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
-for (const rootName of [REGISTERED_ROOT, APPROVED_ROOT]) {
-  for (const batch of BATCH_FOLDERS) {
-    await fs.mkdir(
-      path.join(UPLOAD_DIR, rootName, batch),
-      { recursive: true }
-    );
-  }
+if (!MEGA_EMAIL || !MEGA_PASSWORD) {
+  throw new Error(
+    'MEGA_EMAIL and MEGA_PASSWORD must be set in the server environment.'
+  );
 }
 
-await fs.mkdir(
-  path.join(UPLOAD_DIR, '.incoming'),
-  { recursive: true }
-);
+const TEMP_DIR = path.join(os.tmpdir(), 'fine-arts-exhibition-incoming');
+await fsp.mkdir(TEMP_DIR, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    try {
-      const dir = path.join(UPLOAD_DIR, '.incoming');
-
-      await fs.mkdir(dir, { recursive: true });
-
-      cb(null, dir);
-    } catch (error) {
-      cb(error);
-    }
-  },
-
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, TEMP_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-
-    const base = safePathSegment(
-      path.basename(file.originalname, ext),
-      'artwork'
-    ).slice(0, 80);
-
-    cb(
-      null,
-      `${Date.now()}-${crypto.randomUUID()}-${base}${ext}`
-    );
+    cb(null, `${Date.now()}-${crypto.randomUUID()}${ext}`);
   },
 });
 
 const upload = multer({
-  storage,
-
+  storage: multerStorage,
   limits: {
     fileSize: MAX_FILE_MB * 1024 * 1024,
     files: 11,
   },
-
   fileFilter: (req, file, cb) => {
-    let allowed = false;
-
     if (file.fieldname === 'profilePicture') {
-      allowed = profileMimeTypes.has(file.mimetype);
-    } else if (file.fieldname === 'artworkFiles') {
-      allowed = artworkMimeTypes.has(file.mimetype);
+      if (!PROFILE_MIME_TYPES.has(file.mimetype)) {
+        return cb(new Error('Profile picture must be JPG, PNG, or WEBP.'));
+      }
+      return cb(null, true);
     }
 
-    if (!allowed) {
-      return cb(
-        new Error(`Unsupported file type: ${file.mimetype}`)
-      );
+    if (file.fieldname === 'artworkFiles') {
+      if (!ARTWORK_MIME_TYPES.has(file.mimetype)) {
+        return cb(new Error('Artwork files must be JPG, PNG, or PDF.'));
+      }
+      return cb(null, true);
     }
 
-    cb(null, true);
+    return cb(new Error(`Unexpected upload field: ${file.fieldname}`));
   },
 });
 
 const registrationUpload = upload.fields([
-  {
-    name: 'artworkFiles',
-    maxCount: 10,
-  },
-  {
-    name: 'profilePicture',
-    maxCount: 1,
-  },
+  { name: 'profilePicture', maxCount: 1 },
+  { name: 'artworkFiles', maxCount: 10 },
 ]);
 
-app.use(
-  cors({
-    origin: '*',
-  })
-);
+app.use(cors({ origin: '*' }));
+app.use(express.json({ limit: '2mb' }));
 
-app.use(
-  express.json({
-    limit: '1mb',
-  })
-);
+let mega = null;
+let megaRoots = null;
 
-app.use(
-  '/storage',
-  express.static(UPLOAD_DIR)
-);
+async function connectMega() {
+  if (mega && megaRoots) return mega;
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'fine-arts-exhibition-api',
-    githubConfigured: Boolean(GITHUB_TOKEN),
-    statsPublisherConfigured: Boolean(GITHUB_TOKEN),
-    uploadDir: UPLOAD_DIR,
-  });
-});
+  mega = await new Storage({
+    email: MEGA_EMAIL,
+    password: MEGA_PASSWORD,
+  }).ready;
 
-app.get('/api/stats', async (req, res) => {
+  const exhibitionRoot = await ensureFolder(mega.root, MEGA_ROOT_FOLDER);
+  const artistsRoot = await ensureFolder(exhibitionRoot, 'Artists');
+  const registeredRoot = await ensureFolder(exhibitionRoot, 'Registered');
+  const approvedRoot = await ensureFolder(exhibitionRoot, 'Approved');
+
+  for (const batch of BATCH_FOLDERS) {
+    await ensureFolder(registeredRoot, batch);
+    await ensureFolder(approvedRoot, batch);
+  }
+
+  megaRoots = {
+    exhibitionRoot,
+    artistsRoot,
+    registeredRoot,
+    approvedRoot,
+  };
+
+  return mega;
+}
+
+await connectMega();
+
+app.get('/api/health', async (req, res) => {
   try {
-    const stats = await buildStats('api');
+    await connectMega();
 
-    res.json(stats);
+    res.json({
+      ok: true,
+      service: 'fine-arts-exhibition-api',
+      permanentStorage: 'MEGA',
+      megaRootFolder: MEGA_ROOT_FOLDER,
+      batches: BATCH_FOLDERS,
+    });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: error.message || 'Stats failed',
+    res.status(503).json({
+      ok: false,
+      error: error.message || 'MEGA connection failed.',
     });
   }
 });
 
-app.post(
-  '/api/registrations',
-  registrationUpload,
-  async (req, res) => {
-    try {
-      const artworkUploads =
-        req.files?.artworkFiles || [];
+app.get('/api/registrations', async (req, res) => {
+  try {
+    await connectMega();
 
-      const profileUploads =
-        req.files?.profilePicture || [];
+    const registrations = [
+      ...(await listRegistrationsFromRoot(megaRoots.registeredRoot, 'Pending')),
+      ...(await listRegistrationsFromRoot(megaRoots.approvedRoot, 'Approved')),
+    ];
 
-      if (!artworkUploads.length) {
-        await cleanupIncoming(
-          flattenIncomingFiles(req.files)
-        );
+    registrations.sort((a, b) =>
+      String(b.updatedAt || b.createdAt || '').localeCompare(
+        String(a.updatedAt || a.createdAt || '')
+      )
+    );
 
-        return res.status(400).json({
-          error:
-            'At least one artwork file is required.',
-        });
+    res.json({
+      ok: true,
+      count: registrations.length,
+      registrations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Could not load registrations from MEGA.',
+    });
+  }
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const registered = await listRegistrationsFromRoot(
+      megaRoots.registeredRoot,
+      'Pending'
+    );
+
+    const approved = await listRegistrationsFromRoot(
+      megaRoots.approvedRoot,
+      'Approved'
+    );
+
+    res.json({
+      ok: true,
+      totalArtworksRegistered: registered.length + approved.length,
+      pending: registered.length,
+      approved: approved.length,
+      updatedAt: new Date().toISOString(),
+      source: 'MEGA',
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Could not calculate stats.',
+    });
+  }
+});
+
+app.get('/api/media/:nodeId', async (req, res) => {
+  try {
+    const storage = await connectMega();
+
+    let file = storage.files?.[req.params.nodeId];
+
+    if (!file) {
+      await storage.reload();
+      file = storage.files?.[req.params.nodeId];
+    }
+
+    if (!file || file.directory) {
+      return res.status(404).json({ error: 'File not found.' });
+    }
+
+    res.setHeader('Content-Type', mimeTypeFromName(file.name));
+    res.setHeader('Cache-Control', 'private, max-age=300');
+
+    const stream = file.download();
+
+    stream.on('error', (error) => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Could not download MEGA file.' });
+      } else {
+        res.destroy(error);
       }
+    });
 
-      const now = new Date().toISOString();
+    stream.pipe(res);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Could not download file.',
+    });
+  }
+});
 
-      const registrationId =
-        `${now.replace(/[:.]/g, '-')}-` +
-        crypto.randomUUID().slice(0, 8);
+app.post('/api/registrations', registrationUpload, async (req, res) => {
+  const incomingFiles = flattenIncomingFiles(req.files);
 
-      const category =
-        req.body.category === 'Other'
-          ? req.body.otherCategory
-          : req.body.category;
+  try {
+    validateArtistFields(req.body);
 
-      const yearFolder = normalizeBatch(
-        req.body.studentYear
+    const artworkUploads = req.files?.artworkFiles || [];
+    const profileUploads = req.files?.profilePicture || [];
+
+    if (!artworkUploads.length) {
+      return res.status(400).json({
+        error: 'Please upload at least one artwork file.',
+      });
+    }
+
+    const batch = normalizeBatch(req.body.studentYear);
+
+    if (!BATCH_FOLDERS.includes(batch)) {
+      return res.status(400).json({
+        error: 'Select a batch from 2020 Batch to 2025 Batch.',
+      });
+    }
+
+    const category =
+      req.body.category === 'Other'
+        ? String(req.body.otherCategory || '').trim()
+        : String(req.body.category || '').trim();
+
+    const artist = await findOrCreateArtist({
+      fullName: req.body.fullName,
+      batch,
+    });
+
+    let artistInfo = artist.info;
+
+    if (profileUploads.length) {
+      artistInfo = await replaceArtistProfilePicture(
+        artist.folder,
+        artistInfo,
+        profileUploads[0]
+      );
+    }
+
+    artistInfo = {
+      ...artistInfo,
+      fullName: String(req.body.fullName || '').trim(),
+      batch,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await writeJsonFile(artist.folder, 'artist-info.json', artistInfo);
+
+    const registrationId = await createRegistrationId();
+
+    const registeredBatchFolder = await ensureFolder(
+      megaRoots.registeredRoot,
+      batch
+    );
+
+    const artistArtworkRoot = await ensureFolder(
+      registeredBatchFolder,
+      artistInfo.artistId
+    );
+
+    const registrationFolder = await ensureFolder(
+      artistArtworkRoot,
+      registrationId
+    );
+
+    const storedArtworkFiles = [];
+
+    for (let index = 0; index < artworkUploads.length; index += 1) {
+      const file = artworkUploads[index];
+
+      const storedName = buildArtworkFilename(
+        file.originalname,
+        index + 1
       );
 
-      const studentFolder = safePathSegment(
-        req.body.fullName,
-        'Unnamed Artist'
+      const uploaded = await uploadTempFileToMega(
+        registrationFolder,
+        file,
+        storedName
       );
 
-      const artworkFolder = safePathSegment(
-        req.body.artworkTitle,
-        'Untitled Artwork'
+      storedArtworkFiles.push(
+        megaFileMetadata(uploaded, file.originalname, file.mimetype)
       );
+    }
 
-      const targetDir = path.join(
-        UPLOAD_DIR,
-        REGISTERED_ROOT,
-        yearFolder,
-        studentFolder,
-        artworkFolder
+    const now = new Date().toISOString();
+
+    const registration = {
+      id: registrationId,
+      artistId: artistInfo.artistId,
+      status: 'Pending',
+      createdAt: now,
+      updatedAt: now,
+
+      student: {
+        fullName: artistInfo.fullName,
+        studentYear: artistInfo.batch,
+        profilePicture: artistInfo.profilePicture || null,
+      },
+
+      artwork: {
+        title: String(req.body.artworkTitle || '').trim(),
+        category,
+        medium: String(req.body.medium || '').trim(),
+        dimensions: String(req.body.dimensions || '').trim(),
+        description: String(req.body.description || '').trim(),
+      },
+
+      files: storedArtworkFiles,
+    };
+
+    await writeJsonFile(
+      registrationFolder,
+      'artwork-info.json',
+      registration
+    );
+
+    res.status(201).json({
+      ok: true,
+      id: registrationId,
+      artistId: artistInfo.artistId,
+      registration: hydrateRegistration(registration, artistInfo),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Registration failed.',
+    });
+  } finally {
+    await cleanupIncoming(incomingFiles);
+  }
+});
+
+app.get('/api/registrations/:id', async (req, res) => {
+  try {
+    const found = await findRegistration(req.params.id);
+
+    if (!found) {
+      return res.status(404).json({
+        error: 'Registration not found.',
+      });
+    }
+
+    const artistInfo = await getArtistInfo(found.registration.artistId);
+
+    res.json({
+      ok: true,
+      registration: hydrateRegistration(found.registration, artistInfo),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Could not load registration.',
+    });
+  }
+});
+
+app.put('/api/registrations/:id', registrationUpload, async (req, res) => {
+  const incomingFiles = flattenIncomingFiles(req.files);
+
+  try {
+    const found = await findRegistration(req.params.id);
+
+    if (!found) {
+      return res.status(404).json({
+        error: 'Registration not found.',
+      });
+    }
+
+    const existing = found.registration;
+    let artistInfo = await getArtistInfo(existing.artistId);
+
+    const profileUploads = req.files?.profilePicture || [];
+    const artworkUploads = req.files?.artworkFiles || [];
+
+    const artistFolder = findChild(
+      megaRoots.artistsRoot,
+      existing.artistId,
+      true
+    );
+
+    if (profileUploads.length) {
+      artistInfo = await replaceArtistProfilePicture(
+        artistFolder,
+        artistInfo,
+        profileUploads[0]
       );
+    }
 
-      await fs.mkdir(
-        targetDir,
-        { recursive: true }
-      );
+    if (req.body.fullName !== undefined) {
+      artistInfo.fullName = String(req.body.fullName || '').trim();
+    }
 
-      const files = [];
+    if (req.body.studentYear !== undefined) {
+      artistInfo.batch = normalizeBatch(req.body.studentYear);
+    }
 
-      for (const file of artworkUploads) {
-        const finalPath = await uniqueDestination(
-          targetDir,
-          file.originalname
-        );
+    artistInfo.updatedAt = new Date().toISOString();
 
-        await fs.rename(
-          file.path,
-          finalPath
+    await writeJsonFile(artistFolder, 'artist-info.json', artistInfo);
+
+    let files = existing.files || [];
+
+    if (artworkUploads.length) {
+      await deleteArtworkFiles(found.folder, files);
+
+      files = [];
+
+      for (let index = 0; index < artworkUploads.length; index += 1) {
+        const file = artworkUploads[index];
+
+        const uploaded = await uploadTempFileToMega(
+          found.folder,
+          file,
+          buildArtworkFilename(file.originalname, index + 1)
         );
 
         files.push(
-          fileMetadata(
-            file,
-            finalPath
-          )
+          megaFileMetadata(uploaded, file.originalname, file.mimetype)
         );
       }
+    }
 
-      const profilePicture =
-        profileUploads.length
-          ? await saveProfilePicture(
-              targetDir,
-              profileUploads[0]
-            )
-          : null;
+    const updated = {
+      ...existing,
+      updatedAt: new Date().toISOString(),
 
-      const registration = {
-        id: registrationId,
+      student: {
+        fullName: artistInfo.fullName,
+        studentYear: artistInfo.batch,
+        profilePicture: artistInfo.profilePicture || null,
+      },
 
-        status: 'registered',
-
-        createdAt: now,
-
-        storage: {
-          root: REGISTERED_ROOT,
-
-          yearFolder,
-
-          studentFolder,
-
-          artworkFolder,
-
-          megaSyncPath: path
-            .relative(
-              UPLOAD_DIR,
-              targetDir
-            )
-            .replace(/\\/g, '/'),
-        },
-
-        student: {
-          fullName:
-            req.body.fullName || '',
-
-          studentYear:
-            req.body.studentYear || '',
-
-          profilePicture,
-        },
-
-        artwork: {
-          title:
-            req.body.artworkTitle || '',
-
-          category:
-            category || '',
-
-          medium:
-            req.body.medium || '',
-
-          dimensions:
-            req.body.dimensions || '',
-
-          description:
-            req.body.description || '',
-        },
-
-        files,
-      };
-
-      await fs.writeFile(
-        path.join(
-          targetDir,
-          'registration-info.json'
+      artwork: {
+        title: bodyValue(
+          req.body,
+          'artworkTitle',
+          existing.artwork?.title || ''
         ),
-        JSON.stringify(
-          registration,
-          null,
-          2
+        category: bodyValue(
+          req.body,
+          'category',
+          existing.artwork?.category || ''
         ),
-        'utf-8'
-      );
+        medium: bodyValue(
+          req.body,
+          'medium',
+          existing.artwork?.medium || ''
+        ),
+        dimensions: bodyValue(
+          req.body,
+          'dimensions',
+          existing.artwork?.dimensions || ''
+        ),
+        description: bodyValue(
+          req.body,
+          'description',
+          existing.artwork?.description || ''
+        ),
+      },
 
-      let github = null;
+      files,
+    };
 
-      if (GITHUB_TOKEN) {
-        github =
-          await saveRegistrationToGitHub(
-            registrationId,
-            registration
-          );
+    await writeJsonFile(
+      found.folder,
+      'artwork-info.json',
+      updated
+    );
 
-        await publishStatsToGitHub(
-          'registration'
-        );
-      }
+    res.json({
+      ok: true,
+      registration: hydrateRegistration(updated, artistInfo),
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Registration update failed.',
+    });
+  } finally {
+    await cleanupIncoming(incomingFiles);
+  }
+});
 
-      res.status(201).json({
-        ok: true,
-        id: registrationId,
-        registration,
-        github,
-      });
-    } catch (error) {
-      await cleanupIncoming(
-        flattenIncomingFiles(req.files)
-      );
+app.patch('/api/registrations/:id/review', async (req, res) => {
+  try {
+    const requestedStatus = normalizeReviewStatus(req.body?.status);
 
-      console.error(error);
-
-      res.status(500).json({
-        error:
-          error.message ||
-          'Registration failed',
+    if (!requestedStatus) {
+      return res.status(400).json({
+        error: 'Status must be Approved, Rejected, or Pending.',
       });
     }
-  }
-);
 
-app.get(
-  '/api/registrations/:id',
-  async (req, res) => {
-    try {
-      const found =
-        await findRegistrationById(
-          req.params.id
-        );
+    const found = await findRegistration(req.params.id);
 
-      if (!found) {
-        return res.status(404).json({
-          error:
-            'Registration not found',
-        });
-      }
-
-      res.json({
-        ok: true,
-        id:
-          found.registration.id,
-
-        registration:
-          found.registration,
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        error:
-          error.message ||
-          'Registration lookup failed',
+    if (!found) {
+      return res.status(404).json({
+        error: 'Registration not found.',
       });
     }
-  }
-);
 
-app.patch(
-  '/api/registrations/:id/review',
-  async (req, res) => {
-    try {
-      const found =
-        await findRegistrationById(
-          req.params.id
-        );
+    const registration = {
+      ...found.registration,
+      status: requestedStatus,
+      reviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-      if (!found) {
-        return res.status(404).json({
-          error:
-            'Registration not found',
-        });
-      }
+    const desiredRoot =
+      requestedStatus === 'Approved'
+        ? megaRoots.approvedRoot
+        : megaRoots.registeredRoot;
 
-      const requestedStatus =
-        normalizeReviewStatus(
-          req.body?.status
-        );
+    const batch = normalizeBatch(
+      registration.student?.studentYear
+    );
 
-      if (!requestedStatus) {
-        return res.status(400).json({
-          error:
-            'Use Approved, Rejected, or Pending status.',
-        });
-      }
+    const batchFolder = await ensureFolder(desiredRoot, batch);
+    const artistFolder = await ensureFolder(
+      batchFolder,
+      registration.artistId
+    );
 
-      const now =
-        new Date().toISOString();
-
-      const registration = {
-        ...found.registration,
-
-        status:
-          requestedStatus.toLowerCase(),
-
-        reviewStatus:
-          requestedStatus,
-
-        reviewedAt:
-          now,
-
-        updatedAt:
-          now,
-      };
-
-      let approvedCopy = null;
-
-      if (
-        requestedStatus ===
-        'Approved'
-      ) {
-        approvedCopy =
-          await copyRegistrationToApproved(
-            found.dir,
-            registration
-          );
-
-        registration.approvedCopy =
-          approvedCopy;
-      }
-
-      await fs.writeFile(
-        found.infoPath,
-        JSON.stringify(
-          registration,
-          null,
-          2
-        ),
-        'utf-8'
-      );
-
-      let github = null;
-
-      if (GITHUB_TOKEN) {
-        github =
-          await saveRegistrationToGitHub(
-            registration.id,
-            registration,
-            `Review ${requestedStatus}`
-          );
-
-        await publishStatsToGitHub(
-          'registration-review'
-        );
-      }
-
-      res.json({
-        ok: true,
-
-        id:
-          registration.id,
-
-        status:
-          requestedStatus,
-
-        registration,
-
-        approvedCopy,
-
-        github,
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        error:
-          error.message ||
-          'Registration review failed',
-      });
+    if (found.folder.parent !== artistFolder) {
+      await found.folder.moveTo(artistFolder);
     }
+
+    await writeJsonFile(
+      found.folder,
+      'artwork-info.json',
+      registration
+    );
+
+    res.json({
+      ok: true,
+      status: requestedStatus,
+      registration,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message || 'Could not update review status.',
+    });
   }
-);
-
-app.put(
-  '/api/registrations/:id',
-  registrationUpload,
-  async (req, res) => {
-    try {
-      const found =
-        await findRegistrationById(
-          req.params.id
-        );
-
-      if (!found) {
-        await cleanupIncoming(
-          flattenIncomingFiles(
-            req.files
-          )
-        );
-
-        return res.status(404).json({
-          error:
-            'Registration not found',
-        });
-      }
-
-      const existing =
-        found.registration;
-
-      const now =
-        new Date().toISOString();
-
-      const category =
-        req.body.category === 'Other'
-          ? req.body.otherCategory
-          : req.body.category;
-
-      const artworkUploads =
-        req.files?.artworkFiles || [];
-
-      const profileUploads =
-        req.files?.profilePicture || [];
-
-      const yearFolder =
-        normalizeBatch(
-          req.body.studentYear ||
-            existing.student
-              ?.studentYear
-        );
-
-      const studentFolder =
-        safePathSegment(
-          req.body.fullName ||
-            existing.student
-              ?.fullName,
-
-          'Unnamed Artist'
-        );
-
-      const artworkFolder =
-        safePathSegment(
-          req.body.artworkTitle ||
-            existing.artwork
-              ?.title,
-
-          'Untitled Artwork'
-        );
-
-      const targetDir =
-        path.join(
-          UPLOAD_DIR,
-          REGISTERED_ROOT,
-          yearFolder,
-          studentFolder,
-          artworkFolder
-        );
-
-      if (
-        path.resolve(found.dir) !==
-        path.resolve(targetDir)
-      ) {
-        try {
-          await fs.access(
-            targetDir
-          );
-
-          await cleanupIncoming(
-            flattenIncomingFiles(
-              req.files
-            )
-          );
-
-          return res.status(409).json({
-            error:
-              'Another registration already uses that batch/artist/artwork folder.',
-          });
-        } catch (error) {
-          if (
-            error.code !==
-            'ENOENT'
-          ) {
-            throw error;
-          }
-        }
-
-        await fs.mkdir(
-          path.dirname(
-            targetDir
-          ),
-          {
-            recursive: true,
-          }
-        );
-
-        await fs.rename(
-          found.dir,
-          targetDir
-        );
-      }
-
-      let files =
-        Array.isArray(
-          existing.files
-        )
-          ? existing.files
-          : [];
-
-      const filesToRemove =
-        parseFileRemovalList(
-          req.body
-            .removeExistingFiles
-        );
-
-      if (
-        artworkUploads.length
-      ) {
-        await removeArtworkFiles(
-          targetDir
-        );
-
-        files = [];
-
-        for (
-          const file of
-          artworkUploads
-        ) {
-          const finalPath =
-            await uniqueDestination(
-              targetDir,
-              file.originalname
-            );
-
-          await fs.rename(
-            file.path,
-            finalPath
-          );
-
-          files.push(
-            fileMetadata(
-              file,
-              finalPath
-            )
-          );
-        }
-      } else {
-        const remainingFiles =
-          files.filter(
-            (file) =>
-              !shouldRemoveFile(
-                file,
-                filesToRemove
-              )
-          );
-
-        if (
-          files.length &&
-          !remainingFiles.length
-        ) {
-          await cleanupIncoming(
-            flattenIncomingFiles(
-              req.files
-            )
-          );
-
-          return res.status(400).json({
-            error:
-              'At least one artwork file must remain. Upload a replacement before removing all existing files.',
-          });
-        }
-
-        await removeSelectedArtworkFiles(
-          targetDir,
-          files,
-          filesToRemove
-        );
-
-        files =
-          remainingFiles.map(
-            (file) => {
-              const finalPath =
-                path.join(
-                  targetDir,
-                  file.storedName ||
-                    file.originalName ||
-                    'artwork'
-                );
-
-              const rel =
-                path
-                  .relative(
-                    UPLOAD_DIR,
-                    finalPath
-                  )
-                  .replace(
-                    /\\/g,
-                    '/'
-                  );
-
-              return {
-                ...file,
-
-                megaSyncPath:
-                  rel,
-
-                url:
-                  `${PUBLIC_BASE_URL}/storage/` +
-                  rel
-                    .split('/')
-                    .map(
-                      encodeURIComponent
-                    )
-                    .join('/'),
-              };
-            }
-          );
-      }
-
-      let profilePicture =
-        remapProfilePicture(
-          existing.student
-            ?.profilePicture,
-          targetDir
-        );
-
-      if (
-        profileUploads.length
-      ) {
-        profilePicture =
-          await saveProfilePicture(
-            targetDir,
-            profileUploads[0]
-          );
-      }
-
-      const registration = {
-        ...existing,
-
-        id:
-          existing.id,
-
-        status:
-          existing.status ||
-          'registered',
-
-        createdAt:
-          existing.createdAt,
-
-        updatedAt:
-          now,
-
-        storage: {
-          root:
-            REGISTERED_ROOT,
-
-          yearFolder,
-
-          studentFolder,
-
-          artworkFolder,
-
-          megaSyncPath:
-            path
-              .relative(
-                UPLOAD_DIR,
-                targetDir
-              )
-              .replace(
-                /\\/g,
-                '/'
-              ),
-        },
-
-        student: {
-          fullName:
-            req.body.fullName ||
-            existing.student
-              ?.fullName ||
-            '',
-
-          studentYear:
-            req.body.studentYear ||
-            existing.student
-              ?.studentYear ||
-            '',
-
-          profilePicture,
-        },
-
-        artwork: {
-          title:
-            req.body.artworkTitle ||
-            existing.artwork
-              ?.title ||
-            '',
-
-          category:
-            category ||
-            existing.artwork
-              ?.category ||
-            '',
-
-          medium:
-            req.body.medium ||
-            existing.artwork
-              ?.medium ||
-            '',
-
-          dimensions:
-            optionalBodyValue(
-              req.body,
-              'dimensions',
-              existing.artwork
-                ?.dimensions ||
-                ''
-            ),
-
-          description:
-            optionalBodyValue(
-              req.body,
-              'description',
-              existing.artwork
-                ?.description ||
-                ''
-            ),
-        },
-
-        files,
-      };
-
-      await fs.writeFile(
-        path.join(
-          targetDir,
-          'registration-info.json'
-        ),
-
-        JSON.stringify(
-          registration,
-          null,
-          2
-        ),
-
-        'utf-8'
-      );
-
-      let github = null;
-
-      if (GITHUB_TOKEN) {
-        github =
-          await saveRegistrationToGitHub(
-            registration.id,
-            registration,
-            'Update'
-          );
-
-        await publishStatsToGitHub(
-          'registration-edit'
-        );
-      }
-
-      res.json({
-        ok: true,
-        id:
-          registration.id,
-        registration,
-        github,
-      });
-    } catch (error) {
-      await cleanupIncoming(
-        flattenIncomingFiles(
-          req.files
-        )
-      );
-
-      console.error(error);
-
-      res.status(500).json({
-        error:
-          error.message ||
-          'Registration update failed',
-      });
-    }
-  }
-);
-
-function flattenIncomingFiles(
-  files
-) {
-  if (!files) {
-    return [];
-  }
-
-  if (
-    Array.isArray(files)
-  ) {
-    return files;
-  }
-
-  return Object.values(
-    files
-  )
-    .flat()
-    .filter(Boolean);
+});
+
+async function ensureFolder(parent, name) {
+  const existing = findChild(parent, name, true);
+  if (existing) return existing;
+  return await parent.mkdir(name);
 }
 
-async function saveProfilePicture(
-  targetDir,
+function findChild(parent, name, directory = null) {
+  const children = parent?.children || [];
+
+  return children.find((child) => {
+    if (child.name !== name) return false;
+    if (directory === null) return true;
+    return Boolean(child.directory) === Boolean(directory);
+  });
+}
+
+async function findOrCreateArtist({ fullName, batch }) {
+  const normalizedName = normalizeIdentityName(fullName);
+
+  for (const folder of megaRoots.artistsRoot.children || []) {
+    if (!folder.directory) continue;
+
+    const info = await readJsonFile(folder, 'artist-info.json');
+    if (!info) continue;
+
+    if (
+      normalizeIdentityName(info.fullName) === normalizedName &&
+      normalizeBatch(info.batch) === batch
+    ) {
+      return { folder, info };
+    }
+  }
+
+  const artistId =
+    `ARTIST-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+
+  const folder = await ensureFolder(
+    megaRoots.artistsRoot,
+    artistId
+  );
+
+  const now = new Date().toISOString();
+
+  const info = {
+    artistId,
+    fullName: String(fullName || '').trim(),
+    batch,
+    profilePicture: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await writeJsonFile(folder, 'artist-info.json', info);
+  await ensureFolder(folder, 'profile');
+
+  return { folder, info };
+}
+
+async function getArtistInfo(artistId) {
+  const folder = findChild(
+    megaRoots.artistsRoot,
+    artistId,
+    true
+  );
+
+  if (!folder) return null;
+
+  return await readJsonFile(folder, 'artist-info.json');
+}
+
+async function replaceArtistProfilePicture(
+  artistFolder,
+  artistInfo,
   file
 ) {
-  const profileDir =
-    path.join(
-      targetDir,
-      'profile'
-    );
-
-  await fs.rm(
-    profileDir,
-    {
-      recursive: true,
-      force: true,
-    }
+  const profileFolder = await ensureFolder(
+    artistFolder,
+    'profile'
   );
 
-  await fs.mkdir(
-    profileDir,
-    {
-      recursive: true,
-    }
-  );
-
-  let ext =
-    path
-      .extname(
-        file.originalname
-      )
-      .toLowerCase();
-
-  if (!ext) {
-    if (
-      file.mimetype ===
-      'image/png'
-    ) {
-      ext = '.png';
-    } else if (
-      file.mimetype ===
-      'image/webp'
-    ) {
-      ext = '.webp';
-    } else {
-      ext = '.jpg';
+  for (const child of [...(profileFolder.children || [])]) {
+    if (!child.directory) {
+      await child.delete(true);
     }
   }
 
-  const finalPath =
-    path.join(
-      profileDir,
-      `profile-picture${ext}`
-    );
-
-  await fs.rename(
-    file.path,
-    finalPath
+  const ext = profileExtension(
+    file.originalname,
+    file.mimetype
   );
 
-  return fileMetadata(
+  const uploaded = await uploadTempFileToMega(
+    profileFolder,
     file,
-    finalPath
+    `profile-picture${ext}`
   );
-}
-
-function remapProfilePicture(
-  profilePicture,
-  targetDir
-) {
-  if (!profilePicture) {
-    return null;
-  }
-
-  const storedName =
-    path.basename(
-      profilePicture.storedName ||
-        profilePicture.originalName ||
-        'profile-picture.jpg'
-    );
-
-  const finalPath =
-    path.join(
-      targetDir,
-      'profile',
-      storedName
-    );
-
-  const rel =
-    path
-      .relative(
-        UPLOAD_DIR,
-        finalPath
-      )
-      .replace(
-        /\\/g,
-        '/'
-      );
 
   return {
-    ...profilePicture,
-
-    storedName,
-
-    megaSyncPath:
-      rel,
-
-    url:
-      `${PUBLIC_BASE_URL}/storage/` +
-      rel
-        .split('/')
-        .map(
-          encodeURIComponent
-        )
-        .join('/'),
-  };
-}
-
-function fileMetadata(
-  file,
-  finalPath
-) {
-  const rel =
-    path
-      .relative(
-        UPLOAD_DIR,
-        finalPath
-      )
-      .replace(
-        /\\/g,
-        '/'
-      );
-
-  return {
-    originalName:
+    ...artistInfo,
+    profilePicture: megaFileMetadata(
+      uploaded,
       file.originalname,
-
-    storedName:
-      path.basename(
-        finalPath
-      ),
-
-    mimeType:
-      file.mimetype,
-
-    size:
-      file.size,
-
-    megaSyncPath:
-      rel,
-
-    url:
-      `${PUBLIC_BASE_URL}/storage/` +
-      rel
-        .split('/')
-        .map(
-          encodeURIComponent
-        )
-        .join('/'),
+      file.mimetype
+    ),
   };
 }
 
-async function findRegistrationById(
-  id
-) {
-  const needle =
-    String(id || '')
-      .trim();
+async function uploadTempFileToMega(folder, file, targetName) {
+  const stream = fs.createReadStream(file.path);
 
-  if (!needle) {
-    return null;
+  const uploadStream = folder.upload(
+    {
+      name: targetName,
+      size: file.size,
+    },
+    stream
+  );
+
+  return await uploadStream.complete;
+}
+
+async function writeJsonFile(folder, filename, data) {
+  const existing = findChild(folder, filename, false);
+
+  if (existing) {
+    await existing.delete(true);
   }
 
-  const registeredDir =
-    path.join(
-      UPLOAD_DIR,
-      REGISTERED_ROOT
-    );
+  const json = `${JSON.stringify(data, null, 2)}\n`;
 
-  const stack = [
-    registeredDir,
-  ];
+  return await folder.upload(
+    {
+      name: filename,
+      size: Buffer.byteLength(json),
+    },
+    Buffer.from(json)
+  ).complete;
+}
 
-  while (
-    stack.length
-  ) {
-    const current =
-      stack.pop();
+async function readJsonFile(folder, filename) {
+  const file = findChild(folder, filename, false);
+  if (!file) return null;
 
-    let entries = [];
+  const buffer = await file.downloadBuffer();
 
-    try {
-      entries =
-        await fs.readdir(
-          current,
-          {
-            withFileTypes: true,
-          }
-        );
-    } catch (error) {
-      if (
-        error.code ===
-        'ENOENT'
-      ) {
-        continue;
-      }
+  return JSON.parse(buffer.toString('utf8'));
+}
 
-      throw error;
-    }
+async function findRegistration(id) {
+  for (const root of [
+    megaRoots.registeredRoot,
+    megaRoots.approvedRoot,
+  ]) {
+    for (const batchFolder of root.children || []) {
+      if (!batchFolder.directory) continue;
 
-    for (
-      const entry of
-      entries
-    ) {
-      const entryPath =
-        path.join(
-          current,
-          entry.name
+      for (const artistFolder of batchFolder.children || []) {
+        if (!artistFolder.directory) continue;
+
+        const registrationFolder = findChild(
+          artistFolder,
+          id,
+          true
         );
 
-      if (
-        entry.isDirectory()
-      ) {
-        stack.push(
-          entryPath
+        if (!registrationFolder) continue;
+
+        const registration = await readJsonFile(
+          registrationFolder,
+          'artwork-info.json'
         );
-      } else if (
-        entry.name ===
-        'registration-info.json'
-      ) {
-        try {
-          const registration =
-            JSON.parse(
-              await fs.readFile(
-                entryPath,
-                'utf-8'
-              )
-            );
 
-          if (
-            registration.id ===
-            needle
-          ) {
-            return {
-              registration,
-
-              infoPath:
-                entryPath,
-
-              dir:
-                path.dirname(
-                  entryPath
-                ),
-            };
-          }
-        } catch (error) {
-          console.warn(
-            `Skipping unreadable registration info ${entryPath}:`,
-            error.message
-          );
+        if (registration) {
+          return {
+            folder: registrationFolder,
+            registration,
+          };
         }
       }
     }
@@ -1206,903 +765,206 @@ async function findRegistrationById(
   return null;
 }
 
-function normalizeReviewStatus(
-  value
-) {
-  const normalized =
-    String(value || '')
-      .trim()
-      .toLowerCase();
+async function listRegistrationsFromRoot(root, defaultStatus) {
+  const registrations = [];
 
-  if (
-    normalized ===
-      'approved' ||
-    normalized ===
-      'approve'
-  ) {
-    return 'Approved';
+  for (const batchFolder of root.children || []) {
+    if (!batchFolder.directory) continue;
+
+    for (const artistFolder of batchFolder.children || []) {
+      if (!artistFolder.directory) continue;
+
+      const artistInfo = await getArtistInfo(artistFolder.name);
+
+      for (const folder of artistFolder.children || []) {
+        if (!folder.directory) continue;
+
+        const registration = await readJsonFile(
+          folder,
+          'artwork-info.json'
+        );
+
+        if (registration) {
+          registrations.push(
+            hydrateRegistration(
+              {
+                ...registration,
+                status: registration.status || defaultStatus,
+              },
+              artistInfo
+            )
+          );
+        }
+      }
+    }
   }
 
-  if (
-    normalized ===
-      'rejected' ||
-    normalized ===
-      'reject'
-  ) {
-    return 'Rejected';
+  return registrations;
+}
+
+async function deleteArtworkFiles(folder, files) {
+  for (const fileInfo of files || []) {
+    const megaFile = mega.files?.[fileInfo.nodeId];
+
+    if (megaFile) {
+      await megaFile.delete(true);
+    }
+  }
+}
+
+function megaFileMetadata(file, originalName, mimeType) {
+  const nodeId =
+    Object.entries(mega.files || {}).find(
+      ([, candidate]) => candidate === file
+    )?.[0] || '';
+
+  return {
+    nodeId,
+    originalName,
+    storedName: file.name,
+    mimeType,
+    size: file.size || 0,
+    url: nodeId
+      ? `${PUBLIC_BASE_URL}/api/media/${encodeURIComponent(nodeId)}`
+      : '',
+  };
+}
+
+function hydrateRegistration(registration, artistInfo) {
+  return {
+    ...registration,
+
+    student: {
+      ...(registration.student || {}),
+      fullName:
+        artistInfo?.fullName ||
+        registration.student?.fullName ||
+        '',
+      studentYear:
+        artistInfo?.batch ||
+        registration.student?.studentYear ||
+        '',
+      profilePicture:
+        artistInfo?.profilePicture ||
+        registration.student?.profilePicture ||
+        null,
+    },
+  };
+}
+
+function validateArtistFields(body) {
+  const required = [
+    'fullName',
+    'studentYear',
+    'artworkTitle',
+    'category',
+    'medium',
+  ];
+
+  for (const key of required) {
+    if (!String(body?.[key] || '').trim()) {
+      throw new Error(`${key} is required.`);
+    }
+  }
+}
+
+function normalizeBatch(value) {
+  const text = String(value || '').trim();
+
+  const match = text.match(/202[0-5]/);
+
+  return match
+    ? `${match[0]} Batch`
+    : text;
+}
+
+function normalizeIdentityName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+async function createRegistrationId() {
+  return `ART-${new Date().getFullYear()}-${crypto
+    .randomBytes(4)
+    .toString('hex')
+    .toUpperCase()}`;
+}
+
+function buildArtworkFilename(originalName, index) {
+  const ext = path.extname(originalName).toLowerCase();
+  const base = path.basename(originalName, ext);
+
+  return `${String(index).padStart(2, '0')}-${base}${ext}`;
+}
+
+function profileExtension(originalName, mimeType) {
+  const ext = path.extname(originalName).toLowerCase();
+
+  if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+    return ext;
   }
 
-  if (
-    normalized ===
-      'pending' ||
-    normalized ===
-      'request changes' ||
-    normalized ===
-      'changes requested'
-  ) {
-    return 'Pending';
+  if (mimeType === 'image/png') return '.png';
+  if (mimeType === 'image/webp') return '.webp';
+
+  return '.jpg';
+}
+
+function mimeTypeFromName(filename) {
+  const ext = path.extname(filename || '').toLowerCase();
+
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.pdf') return 'application/pdf';
+
+  return 'application/octet-stream';
+}
+
+function flattenIncomingFiles(files) {
+  if (!files) return [];
+  return Object.values(files).flat();
+}
+
+async function cleanupIncoming(files) {
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        await fsp.unlink(file.path);
+      } catch {}
+    })
+  );
+}
+
+function bodyValue(body, key, fallback) {
+  if (!Object.prototype.hasOwnProperty.call(body, key)) {
+    return fallback;
   }
+
+  return String(body[key] ?? '').trim();
+}
+
+function normalizeReviewStatus(value) {
+  const text = String(value || '').trim().toLowerCase();
+
+  if (text === 'approved' || text === 'approve') return 'Approved';
+  if (text === 'rejected' || text === 'reject') return 'Rejected';
+  if (text === 'pending') return 'Pending';
 
   return '';
 }
 
-async function copyRegistrationToApproved(
-  sourceDir,
-  registration
-) {
-  const yearFolder =
-    registration.storage
-      ?.yearFolder ||
-    normalizeBatch(
-      registration.student
-        ?.studentYear
-    );
-
-  const studentFolder =
-    registration.storage
-      ?.studentFolder ||
-    safePathSegment(
-      registration.student
-        ?.fullName,
-      'Unnamed Artist'
-    );
-
-  const artworkFolder =
-    registration.storage
-      ?.artworkFolder ||
-    safePathSegment(
-      registration.artwork
-        ?.title,
-      'Untitled Artwork'
-    );
-
-  const approvedDir =
-    path.join(
-      UPLOAD_DIR,
-      APPROVED_ROOT,
-      yearFolder,
-      studentFolder,
-      artworkFolder
-    );
-
-  const approvedInfoPath =
-    path.join(
-      approvedDir,
-      'registration-info.json'
-    );
-
-  await fs.mkdir(
-    path.dirname(
-      approvedDir
-    ),
-    {
-      recursive: true,
-    }
-  );
-
-  await fs.rm(
-    approvedDir,
-    {
-      recursive: true,
-      force: true,
-    }
-  );
-
-  await fs.cp(
-    sourceDir,
-    approvedDir,
-    {
-      recursive: true,
-    }
-  );
-
-  const approvedRegistration = {
-    ...registration,
-
-    storage: {
-      ...(registration.storage ||
-        {}),
-
-      root:
-        APPROVED_ROOT,
-
-      yearFolder,
-
-      studentFolder,
-
-      artworkFolder,
-
-      megaSyncPath:
-        path
-          .relative(
-            UPLOAD_DIR,
-            approvedDir
-          )
-          .replace(
-            /\\/g,
-            '/'
-          ),
-    },
-
-    files:
-      (
-        registration.files ||
-        []
-      ).map(
-        (file) => {
-          const storedName =
-            file.storedName ||
-            file.originalName ||
-            '';
-
-          const finalPath =
-            path.join(
-              approvedDir,
-              path.basename(
-                storedName
-              )
-            );
-
-          const rel =
-            path
-              .relative(
-                UPLOAD_DIR,
-                finalPath
-              )
-              .replace(
-                /\\/g,
-                '/'
-              );
-
-          return {
-            ...file,
-
-            megaSyncPath:
-              rel,
-
-            url:
-              `${PUBLIC_BASE_URL}/storage/` +
-              rel
-                .split('/')
-                .map(
-                  encodeURIComponent
-                )
-                .join('/'),
-          };
-        }
-      ),
-
-    student: {
-      ...(registration.student ||
-        {}),
-
-      profilePicture:
-        remapProfilePicture(
-          registration.student
-            ?.profilePicture,
-          approvedDir
-        ),
-    },
-  };
-
-  await fs.writeFile(
-    approvedInfoPath,
-
-    JSON.stringify(
-      approvedRegistration,
-      null,
-      2
-    ),
-
-    'utf-8'
-  );
-
-  return {
-    root:
-      APPROVED_ROOT,
-
-    megaSyncPath:
-      path
-        .relative(
-          UPLOAD_DIR,
-          approvedDir
-        )
-        .replace(
-          /\\/g,
-          '/'
-        ),
-
-    fileCount:
-      approvedRegistration
-        .files.length,
-  };
-}
-
-async function removeArtworkFiles(
-  dir
-) {
-  const entries =
-    await fs.readdir(
-      dir,
-      {
-        withFileTypes: true,
-      }
-    );
-
-  await Promise.all(
-    entries.map(
-      async (entry) => {
-        if (
-          !entry.isFile() ||
-          entry.name ===
-            'registration-info.json'
-        ) {
-          return;
-        }
-
-        await fs.unlink(
-          path.join(
-            dir,
-            entry.name
-          )
-        );
-      }
-    )
-  );
-}
-
-function parseFileRemovalList(
-  value
-) {
-  if (!value) {
-    return new Set();
-  }
-
-  const rawValues =
-    Array.isArray(value)
-      ? value
-      : [value];
-
-  const names = [];
-
-  for (
-    const rawValue of
-    rawValues
-  ) {
-    try {
-      const parsed =
-        JSON.parse(
-          rawValue
-        );
-
-      if (
-        Array.isArray(
-          parsed
-        )
-      ) {
-        names.push(
-          ...parsed
-        );
-      } else {
-        names.push(
-          parsed
-        );
-      }
-    } catch {
-      names.push(
-        rawValue
-      );
-    }
-  }
-
-  return new Set(
-    names
-      .map(
-        (name) =>
-          String(
-            name || ''
-          ).trim()
-      )
-      .filter(Boolean)
-  );
-}
-
-function shouldRemoveFile(
-  file,
-  filesToRemove
-) {
-  return (
-    filesToRemove.has(
-      file.storedName
-    ) ||
-    filesToRemove.has(
-      file.originalName
-    ) ||
-    filesToRemove.has(
-      file.megaSyncPath
-    )
-  );
-}
-
-function optionalBodyValue(
-  body,
-  key,
-  fallback = ''
-) {
-  return Object.prototype.hasOwnProperty.call(
-    body || {},
-    key
-  )
-    ? body[key] || ''
-    : fallback;
-}
-
-async function removeSelectedArtworkFiles(
-  dir,
-  files,
-  filesToRemove
-) {
-  if (
-    !filesToRemove.size
-  ) {
-    return;
-  }
-
-  await Promise.all(
-    files.map(
-      async (file) => {
-        if (
-          !shouldRemoveFile(
-            file,
-            filesToRemove
-          )
-        ) {
-          return;
-        }
-
-        const storedName =
-          path.basename(
-            file.storedName ||
-              file.originalName ||
-              ''
-          );
-
-        if (
-          !storedName ||
-          storedName ===
-            'registration-info.json'
-        ) {
-          return;
-        }
-
-        try {
-          await fs.unlink(
-            path.join(
-              dir,
-              storedName
-            )
-          );
-        } catch (error) {
-          if (
-            error.code !==
-            'ENOENT'
-          ) {
-            throw error;
-          }
-        }
-      }
-    )
-  );
-}
-
-function normalizeBatch(
-  value
-) {
-  const text =
-    String(value || '')
-      .trim();
-
-  const match =
-    text.match(
-      /202[0-5]/
-    );
-
-  if (match) {
-    return `${match[0]} Batch`;
-  }
-
-  return (
-    BATCH_FOLDERS.find(
-      (batch) =>
-        batch.toLowerCase() ===
-        text.toLowerCase()
-    ) ||
-    'Unknown Batch'
-  );
-}
-
-function safePathSegment(
-  value,
-  fallback
-) {
-  const cleaned =
-    String(value || '')
-      .normalize('NFKD')
-      .replace(
-        /[\u0300-\u036f]/g,
-        ''
-      )
-      .replace(
-        /[<>:"/\\|?*\x00-\x1f]+/g,
-        '-'
-      )
-      .replace(
-        /\s+/g,
-        ' '
-      )
-      .replace(
-        /^-+|-+$/g,
-        ''
-      )
-      .trim()
-      .slice(
-        0,
-        120
-      );
-
-  return (
-    cleaned ||
-    fallback
-  );
-}
-
-async function uniqueDestination(
-  dir,
-  originalName
-) {
-  const ext =
-    path
-      .extname(
-        originalName
-      )
-      .toLowerCase();
-
-  const base =
-    safePathSegment(
-      path.basename(
-        originalName,
-        ext
-      ),
-      'artwork'
-    );
-
-  let candidate =
-    path.join(
-      dir,
-      `${base}${ext}`
-    );
-
-  for (
-    let index = 2;
-    ;
-    index += 1
-  ) {
-    try {
-      await fs.access(
-        candidate
-      );
-
-      candidate =
-        path.join(
-          dir,
-          `${base}-${index}${ext}`
-        );
-    } catch {
-      return candidate;
-    }
-  }
-}
-
-async function cleanupIncoming(
-  files
-) {
-  const list =
-    flattenIncomingFiles(
-      files
-    );
-
-  await Promise.all(
-    list.map(
-      async (file) => {
-        try {
-          await fs.unlink(
-            file.path
-          );
-        } catch {
-          // Ignore cleanup errors.
-        }
-      }
-    )
-  );
-}
-
-async function countArtworkTitleFolders(
-  registeredDir
-) {
-  let total = 0;
-
-  let batchEntries = [];
-
-  try {
-    batchEntries =
-      await fs.readdir(
-        registeredDir,
-        {
-          withFileTypes: true,
-        }
-      );
-  } catch (error) {
-    if (
-      error.code ===
-      'ENOENT'
-    ) {
-      return 0;
-    }
-
-    throw error;
-  }
-
-  for (
-    const batchEntry of
-    batchEntries
-  ) {
-    if (
-      !batchEntry.isDirectory()
-    ) {
-      continue;
-    }
-
-    const batchDir =
-      path.join(
-        registeredDir,
-        batchEntry.name
-      );
-
-    const artistEntries =
-      await fs.readdir(
-        batchDir,
-        {
-          withFileTypes: true,
-        }
-      );
-
-    for (
-      const artistEntry of
-      artistEntries
-    ) {
-      if (
-        !artistEntry.isDirectory()
-      ) {
-        continue;
-      }
-
-      const artistDir =
-        path.join(
-          batchDir,
-          artistEntry.name
-        );
-
-      const artworkEntries =
-        await fs.readdir(
-          artistDir,
-          {
-            withFileTypes: true,
-          }
-        );
-
-      total +=
-        artworkEntries.filter(
-          (entry) =>
-            entry.isDirectory()
-        ).length;
-    }
-  }
-
-  return total;
-}
-
-async function buildStats(
-  source = 'api'
-) {
-  const totalArtworksRegistered =
-    await countArtworkTitleFolders(
-      path.join(
-        UPLOAD_DIR,
-        REGISTERED_ROOT
-      )
-    );
-
-  return {
-    ok: true,
-
-    totalArtworksRegistered,
-
-    updatedAt:
-      new Date().toISOString(),
-
-    source,
-  };
-}
-
-async function publishStatsToGitHub(
-  source = 'periodic'
-) {
-  if (
-    !GITHUB_TOKEN ||
-    statsPublishInFlight
-  ) {
-    return null;
-  }
-
-  statsPublishInFlight =
-    true;
-
-  try {
-    const stats =
-      await buildStats(
-        source
-      );
-
-    const statsJson =
-      `${JSON.stringify(
-        stats,
-        null,
-        2
-      )}\n`;
-
-    if (
-      statsJson ===
-      lastPublishedStatsJson
-    ) {
-      return {
-        skipped: true,
-        reason: 'unchanged',
-      };
-    }
-
-    const result =
-      await createOrUpdateGitHubFile({
-        filePath:
-          'stats.json',
-
-        contentText:
-          statsJson,
-
-        message:
-          `Update artwork stats (${stats.totalArtworksRegistered})`,
-      });
-
-    lastPublishedStatsJson =
-      statsJson;
-
-    return {
-      path:
-        'stats.json',
-
-      htmlUrl:
-        result.data.content
-          ?.html_url,
-
-      commitUrl:
-        result.data.commit
-          ?.html_url,
-    };
-  } catch (error) {
-    console.error(
-      'Could not publish stats.json to GitHub',
-      error
-    );
-
-    return {
-      error:
-        error.message ||
-        'Stats publish failed',
-    };
-  } finally {
-    statsPublishInFlight =
-      false;
-  }
-}
-
-async function createOrUpdateGitHubFile({
-  filePath,
-  contentText,
-  message,
-}) {
-  const octokit =
-    new Octokit({
-      auth:
-        GITHUB_TOKEN,
-    });
-
-  let sha;
-
-  try {
-    const existing =
-      await octokit.repos.getContent({
-        owner:
-          GITHUB_OWNER,
-
-        repo:
-          GITHUB_REPO,
-
-        path:
-          filePath,
-
-        ref:
-          GITHUB_BRANCH,
-      });
-
-    if (
-      !Array.isArray(
-        existing.data
-      )
-    ) {
-      sha =
-        existing.data.sha;
-    }
-  } catch (error) {
-    if (
-      error.status !==
-      404
-    ) {
-      throw error;
-    }
-  }
-
-  return octokit.repos.createOrUpdateFileContents({
-    owner:
-      GITHUB_OWNER,
-
-    repo:
-      GITHUB_REPO,
-
-    path:
-      filePath,
-
-    message,
-
-    content:
-      Buffer.from(
-        contentText
-      ).toString(
-        'base64'
-      ),
-
-    branch:
-      GITHUB_BRANCH,
-
-    sha,
+app.use((error, req, res, next) => {
+  console.error(error);
+
+  res.status(400).json({
+    error: error.message || 'Bad request.',
   });
-}
+});
 
-async function saveRegistrationToGitHub(
-  id,
-  registration,
-  action = 'Add'
-) {
-  const filePath =
-    `registrations/${id}.json`;
-
-  const result =
-    await createOrUpdateGitHubFile({
-      filePath,
-
-      contentText:
-        `${JSON.stringify(
-          registration,
-          null,
-          2
-        )}\n`,
-
-      message:
-        `${action} artwork registration ${id}`,
-    });
-
-  return {
-    path:
-      filePath,
-
-    htmlUrl:
-      result.data.content
-        ?.html_url,
-
-    commitUrl:
-      result.data.commit
-        ?.html_url,
-  };
-}
-
-app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
-    console.error(
-      error
-    );
-
-    res.status(400).json({
-      error:
-        error.message ||
-        'Bad request',
-    });
-  }
-);
-
-if (
-  GITHUB_TOKEN &&
-  STATS_PUBLISH_INTERVAL_SECONDS >
-    0
-) {
-  const intervalMs =
-    Math.max(
-      60,
-      STATS_PUBLISH_INTERVAL_SECONDS
-    ) * 1000;
-
-  setInterval(
-    () => {
-      publishStatsToGitHub(
-        'periodic'
-      ).catch(
-        (error) =>
-          console.error(
-            error
-          )
-      );
-    },
-    intervalMs
-  );
-
-  publishStatsToGitHub(
-    'startup'
-  ).catch(
-    (error) =>
-      console.error(
-        error
-      )
-  );
-}
-
-app.listen(
-  PORT,
-  '0.0.0.0',
-  () => {
-    console.log(
-      `Fine Arts Exhibition API listening on 0.0.0.0:${PORT}`
-    );
-  }
-);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Fine Arts Exhibition API running on port ${PORT}`);
+  console.log('Permanent storage: MEGA only');
+});
