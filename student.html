@@ -564,10 +564,10 @@
           } catch {}
         }
 
-        try {
-          const localList = JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
-          if (localList.length > total) total = localList.length;
-        } catch {}
+        // Use API value only — localStorage was for offline fallback which is no longer needed
+        if (stats?.totalArtworksRegistered !== undefined) {
+          total = Number(stats.totalArtworksRegistered);
+        }
 
         counter.textContent = String(total);
       } catch (error) {
