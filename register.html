@@ -360,32 +360,6 @@
       overflow-wrap: anywhere;
     }
 
-    .remove-preview-button {
-      min-height: 40px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 14px;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--ink);
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .remove-preview-button:hover,
-    .remove-preview-button:focus-visible {
-      background: var(--ink);
-      color: #fff;
-      outline: 2px solid var(--focus);
-      outline-offset: 3px;
-    }
-
     .file-preview-card {
       display: flex;
       align-items: center;
@@ -416,11 +390,6 @@
       font-weight: 900;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-    }
-
-    .confirm-row {
-      color: var(--ink);
-      cursor: pointer;
     }
 
     .submit-row {
@@ -490,79 +459,6 @@
     .edit-registration-panel p {
       color: var(--soft-ink);
       line-height: 1.6;
-    }
-
-    .artwork-slot {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: clamp(16px, 3vw, 24px);
-      background: #fafbfb;
-      position: relative;
-    }
-
-    .artwork-slot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .artwork-slot-header h3 {
-      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      text-transform: uppercase;
-    }
-
-    .remove-artwork-button {
-      padding: 8px 16px;
-      border: 1px solid var(--line-strong);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--soft-ink);
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .remove-artwork-button:hover {
-      background: var(--ink);
-      color: #fff;
-    }
-
-    .add-artwork-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      border: 2px dashed var(--line-strong);
-      border-radius: 10px;
-      background: transparent;
-      color: var(--soft-ink);
-      font-size: 0.82rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: border-color 160ms ease, color 160ms ease;
-      width: 100%;
-      justify-content: center;
-    }
-
-    .add-artwork-button:hover {
-      border-color: var(--ink);
-      color: var(--ink);
-    }
-
-    .artwork-count {
-      font-size: 0.78rem;
-      color: var(--soft-ink);
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
     }
 
     .submission-success {
@@ -666,61 +562,6 @@
       margin-top: 16px;
     }
 
-    .artwork-files-container label {
-      margin-bottom: 8px;
-    }
-
-    .current-files-panel {
-      margin-top: 16px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #fafbfb;
-    }
-
-    .current-files-panel[hidden] {
-      display: none !important;
-    }
-
-    .current-files-title {
-      font-weight: 900;
-      font-size: 0.74rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      color: var(--soft-ink);
-    }
-
-    .current-files-help {
-      font-size: 0.76rem;
-      color: var(--soft-ink);
-      margin-bottom: 12px;
-    }
-
-    .current-file-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .current-file-link {
-      font-size: 0.7rem;
-      font-weight: 900;
-      color: var(--ink);
-      text-decoration: underline;
-    }
-
-    .remove-file-note {
-      font-size: 0.7rem;
-      color: var(--soft-ink);
-      margin-top: 6px;
-      font-style: italic;
-    }
-
-    .marked-for-removal {
-      opacity: 0.6;
-    }
-
     @media (max-width: 768px) {
       .registration-layout {
         grid-template-columns: 1fr;
@@ -748,7 +589,7 @@
       <div class="intro">
         <p class="eyebrow">Artwork Registration</p>
         <h1>Register Your Artwork</h1>
-        <p>Enter your details below and upload up to 10 artworks. Each artwork gets its own registration.</p>
+        <p>Fill in your details below and upload your artwork files. The artwork will be reviewed before being added to the exhibition.</p>
       </div>
 
       <div class="form-card">
@@ -767,9 +608,8 @@
           <p class="edit-status" id="edit-registration-status" aria-live="polite"></p>
         </section>
 
-        <div id="artwork-slots-container"></div>
-
-<form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
+        <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
+          <!-- Artist Information -->
           <fieldset>
             <legend>Artist Information</legend>
             <div class="field-grid">
@@ -790,20 +630,64 @@
                 </select>
               </div>
             </div>
-
             <div class="field">
               <label for="profile-picture">Profile Picture</label>
               <input id="profile-picture" name="profilePicture" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
             </div>
           </fieldset>
 
-          <button type="button" class="add-artwork-button" id="add-artwork-button">
-            <span>+</span> Add Another Artwork
-          </button>
-
-          <label class="confirm-row" for="ownership-confirmation">
-
-          <!-- Artwork slots -->
+          <!-- Artwork Information -->
+          <fieldset>
+            <legend>Artwork Information</legend>
+            <div class="field">
+              <label for="artwork-title">Artwork Title <span class="required">*</span></label>
+              <input id="artwork-title" name="artworkTitle" type="text" required placeholder="Enter artwork title" />
+            </div>
+            <div class="radio-group">
+              <p class="group-label">Category <span class="required">*</span></p>
+              <div class="category-grid">
+                <label class="radio-card"><input type="radio" name="category" value="Painting" required /> <span>Painting</span></label>
+                <label class="radio-card"><input type="radio" name="category" value="Drawing" /> <span>Drawing</span></label>
+                <label class="radio-card"><input type="radio" name="category" value="Sculpture" /> <span>Sculpture</span></label>
+                <label class="radio-card"><input type="radio" name="category" value="Printmaking" /> <span>Printmaking</span></label>
+                <label class="radio-card"><input type="radio" name="category" value="Installation" /> <span>Installation</span></label>
+                <label class="radio-card"><input type="radio" name="category" value="Other" id="category-other" /> <span>Other</span></label>
+              </div>
+            </div>
+            <div class="field other-category-field" id="other-category-field" hidden>
+              <label for="other-category">Other Category <span class="required">*</span></label>
+              <input id="other-category" name="otherCategory" type="text" placeholder="Type the category" />
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="medium">Medium <span class="required">*</span></label>
+                <input id="medium" name="medium" type="text" required placeholder="e.g., Oil on Canvas" />
+              </div>
+              <div class="field">
+                <label for="dimensions">Dimensions</label>
+                <input id="dimensions" name="dimensions" type="text" placeholder="Example: 24 × 36 in" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" placeholder="Brief description of the artwork"></textarea>
+            </div>
+            <div class="artwork-files-container">
+              <label for="artwork-file">Artwork Files <span class="required">*</span></label>
+              <label class="upload-box" for="artwork-file">
+                <input id="artwork-file" name="artworkFiles" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple />
+                <span class="upload-copy">
+                  <strong>Drag files here</strong>
+                  <span>JPG / PNG / PDF • Multiple files allowed</span>
+                </span>
+              </label>
+              <div class="upload-preview" id="artwork-preview" aria-live="polite" hidden>
+                <p class="upload-preview-title">Artwork Previews</p>
+                <p class="upload-preview-count" id="artwork-preview-count"></p>
+                <div id="artwork-preview-content"></div>
+              </div>
+            </div>
+          </fieldset>
 
           <label class="confirm-row" for="ownership-confirmation">
             <input id="ownership-confirmation" name="ownershipConfirmation" type="checkbox" required />
@@ -811,7 +695,7 @@
           </label>
 
           <div class="submit-row">
-            <button class="register-button" type="submit">Register All Artworks</button>
+            <button class="register-button" type="submit">Register Artwork</button>
           </div>
 
           <p class="note" aria-live="polite">Uploads will be saved to TrueNAS / MEGA.</p>
@@ -820,12 +704,8 @@
         <section id="submission-success" class="submission-success" aria-live="polite" hidden>
           <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> <span id="success-title-text">Registration Successful</span></h2>
           <div class="success-field">
-            <span class="success-label">Artworks Registered</span>
-            <span class="success-value" id="success-count">0</span>
-          </div>
-          <div class="success-field">
-            <span class="success-label">Registration IDs</span>
-            <span class="success-value" id="success-ids" style="word-break: break-all;"></span>
+            <span class="success-label">Registration ID</span>
+            <span class="success-value" id="success-id"></span>
           </div>
           <div class="success-field">
             <span class="success-label">Status</span>
@@ -841,8 +721,6 @@
 
   <script>
     const API_URL = getApiUrl();
-    const MAX_ARTWORKS = 10;
-    let artworkSlotCount = 0;
 
     function getApiUrl() {
       if (typeof window !== 'undefined') {
@@ -863,148 +741,26 @@
       return 'http://192.168.1.45:8088';
     }
 
-    // Artwork slot management
-    function createArtworkSlot(index) {
-      const container = document.getElementById('artwork-slots-container');
-      const slot = document.createElement('div');
-      slot.className = 'artwork-slot';
-      slot.dataset.artworkIndex = index;
-
-      slot.innerHTML = `
-        <div class="artwork-slot-header">
-          <h3>Artwork ${index + 1}</h3>
-          <span class="artwork-count">${index + 1}/${MAX_ARTWORKS}</span>
-        </div>
-        <div class="field">
-          <label for="artwork-title-${index}">Artwork Title <span class="required">*</span></label>
-          <input id="artwork-title-${index}" name="artworkTitle[${index}]" type="text" required placeholder="Enter artwork title" />
-        </div>
-        <div class="radio-group">
-          <p class="group-label">Category <span class="required">*</span></p>
-          <div class="category-grid">
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Painting" required /> <span>Painting</span></label>
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Drawing" /> <span>Drawing</span></label>
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Sculpture" /> <span>Sculpture</span></label>
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Printmaking" /> <span>Printmaking</span></label>
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Installation" /> <span>Installation</span></label>
-            <label class="radio-card"><input type="radio" name="category[${index}]" value="Other" id="category-other-${index}" /> <span>Other</span></label>
-          </div>
-        </div>
-        <div class="field other-category-field" id="other-category-field-${index}" hidden>
-          <label for="other-category-${index}">Other Category <span class="required">*</span></label>
-          <input id="other-category-${index}" name="otherCategory[${index}]" type="text" placeholder="Type the category" />
-        </div>
-        <div class="field-grid">
-          <div class="field">
-            <label for="medium-${index}">Medium <span class="required">*</span></label>
-            <input id="medium-${index}" name="medium[${index}]" type="text" required placeholder="e.g., Oil on Canvas" />
-          </div>
-          <div class="field">
-            <label for="dimensions-${index}">Dimensions</label>
-            <input id="dimensions-${index}" name="dimensions[${index}]" type="text" placeholder="Example: 24 × 36 in" />
-          </div>
-        </div>
-        <div class="field">
-          <label for="description-${index}">Description</label>
-          <textarea id="description-${index}" name="description[${index}]" placeholder="Brief description of the artwork"></textarea>
-        </div>
-        <div class="artwork-files-container">
-          <label for="artwork-file-${index}">Artwork Files <span class="required">*</span></label>
-          <label class="upload-box" for="artwork-file-${index}">
-            <input id="artwork-file-${index}" name="artworkFiles[]" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple />
-            <span class="upload-copy">
-              <strong>Drag files here</strong>
-              <span>JPG / PNG / PDF • Multiple files allowed</span>
-            </span>
-          </label>
-          <div class="upload-preview" id="artwork-preview-${index}" aria-live="polite" hidden>
-            <p class="upload-preview-title">Artwork Previews</p>
-            <p class="upload-preview-count" id="artwork-preview-count-${index}"></p>
-            <div id="artwork-preview-content-${index}"></div>
-          </div>
-        </div>
-      `;
-
-      container.appendChild(slot);
-      artworkSlotCount++;
-      updateAddButtonVisibility();
-
-    document.getElementById('add-artwork-button').addEventListener('click', () => {
-      createArtworkSlot(artworkSlotCount);
+    // Category Other toggle
+    document.querySelectorAll('input[name="category"]').forEach(input => {
+      input.addEventListener('change', () => {
+        const isOther = input.checked && input.value === 'Other';
+        document.getElementById('other-category-field').hidden = !isOther;
+        const otherInput = document.getElementById('other-category');
+        if (otherInput) otherInput.required = isOther;
+      });
     });
 
-      // Setup category handlers
-      const categoryInputs = slot.querySelectorAll(`input[name="category[${index}]"]`);
-      categoryInputs.forEach(input => {
-        input.addEventListener('change', () => {
-          const isOther = input.checked && input.value === 'Other';
-          slot.querySelector(`#other-category-field-${index}`).hidden = !isOther;
-          const otherInput = slot.querySelector(`#other-category-${index}`);
-          if (otherInput) otherInput.required = isOther;
-        });
-      });
-
-      // Setup file preview
-      const fileInput = slot.querySelector(`#artwork-file-${index}`);
-      fileInput.addEventListener('change', (e) => {
-        renderArtworkSlotPreview(index, e.target.files);
-      });
-    }
-
-    function removeArtworkSlot(index) {
-      const container = document.getElementById('artwork-slots-container');
-      const slots = container.querySelectorAll('.artwork-slot');
-      if (slots.length <= 1) {
-        alert('At least one artwork is required.');
-        return;
-      }
-
-      // Remove the slot
-      const slotToRemove = container.querySelector(`[data-artwork-index="${index}"]`);
-      if (slotToRemove) slotToRemove.remove();
-
-      // Re-index remaining slots
-      const remainingSlots = container.querySelectorAll('.artwork-slot');
-      remainingSlots.forEach((slot, i) => {
-        slot.dataset.artworkIndex = i;
-        slot.querySelector('h3').textContent = `Artwork ${i + 1}`;
-        slot.querySelector('.artwork-count').textContent = `${i + 1}/${MAX_ARTWORKS}`;
-
-        // Update input names and IDs
-        slot.querySelector('input[name="artworkTitle"]')?.setAttribute('name', `artworkTitle[${i}]`)?.setAttribute('id', `artwork-title-${i}`);
-        slot.querySelectorAll('input[name^="category["]').forEach(input => {
-          input.setAttribute('name', `category[${i}]`);
-        });
-        slot.querySelector(`#other-category-field-${i}`)?.setAttribute('id', `other-category-field-${i}`);
-        slot.querySelector('input[id^="other-category"]')?.setAttribute('id', `other-category-${i}`);
-        slot.querySelector('input[name^="medium["]')?.setAttribute('name', `medium[${i}]`)?.setAttribute('id', `medium-${i}`);
-        slot.querySelector('input[name^="dimensions["]')?.setAttribute('name', `dimensions[${i}]`)?.setAttribute('id', `dimensions-${i}`);
-        slot.querySelector('textarea[name^="description["]')?.setAttribute('name', `description[${i}]`)?.setAttribute('id', `description-${i}`);
-        slot.querySelector('input[name^="artworkFiles"]')?.setAttribute('id', `artwork-file-${i}`);
-        slot.querySelector('.upload-preview')?.setAttribute('id', `artwork-preview-${i}`);
-        slot.querySelector('.upload-preview-count')?.setAttribute('id', `artwork-preview-count-${i}`);
-        slot.querySelector('[id^="artwork-preview-content"]')?.setAttribute('id', `artwork-preview-content-${i}`);
-      });
-
-      artworkSlotCount = remainingSlots.length;
-      updateAddButtonVisibility();
-
-    document.getElementById('add-artwork-button').addEventListener('click', () => {
-      createArtworkSlot(artworkSlotCount);
+    // File preview
+    const fileInput = document.getElementById('artwork-file');
+    fileInput.addEventListener('change', (e) => {
+      renderFilePreview(e.target.files);
     });
-    }
 
-    function updateAddButtonVisibility() {
-      const container = document.getElementById('artwork-slots-container');
-      const addBtn = document.getElementById('add-artwork-button');
-      const count = container.querySelectorAll('.artwork-slot').length;
-      addBtn.hidden = count >= MAX_ARTWORKS;
-    }
-
-    function renderArtworkSlotPreview(index, files) {
-      const preview = document.getElementById(`artwork-preview-${index}`);
-      const countEl = document.getElementById(`artwork-preview-count-${index}`);
-      const contentEl = document.getElementById(`artwork-preview-content-${index}`);
+    function renderFilePreview(files) {
+      const preview = document.getElementById('artwork-preview');
+      const countEl = document.getElementById('artwork-preview-count');
+      const contentEl = document.getElementById('artwork-preview-content');
 
       if (!files.length) {
         preview.hidden = true;
@@ -1018,7 +774,7 @@
       const previewGrid = document.createElement('div');
       previewGrid.className = 'preview-grid';
 
-      Array.from(files).forEach((file, fileIndex) => {
+      Array.from(files).forEach((file) => {
         const previewItem = document.createElement('div');
         previewItem.className = 'preview-item';
 
@@ -1046,77 +802,45 @@
       contentEl.appendChild(previewGrid);
     }
 
-    // Form handling
+    // Form submission
     const form = document.getElementById('artwork-registration-form');
     const submissionSuccess = document.getElementById('submission-success');
     const saveRegistrationInfoButton = document.getElementById('save-registration-info');
     const note = form.querySelector('.note');
     let latestRegistrationInfo = null;
 
-    // Initialize with 1 artwork slot
-    createArtworkSlot(0);
-
-    document.getElementById('add-artwork-button').addEventListener('click', () => {
-      createArtworkSlot(artworkSlotCount);
-    });
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Validate all artwork slots
-      const slots = document.querySelectorAll('#artwork-slots-container .artwork-slot');
-      const allArtworks = [];
-
-      for (const slot of slots) {
-        const index = parseInt(slot.dataset.artworkIndex, 10);
-        const titleInput = slot.querySelector(`input[name="artworkTitle[${index}]"]`);
-        const categoryInputs = slot.querySelectorAll(`input[name="category[${index}]"]`);
-        const mediumInput = slot.querySelector(`input[name="medium[${index}]"]`);
-
-        const title = titleInput?.value?.trim();
-        const category = Array.from(categoryInputs).find(i => i.checked)?.value;
-        const medium = mediumInput?.value?.trim();
-
-        if (!title) {
-          alert(`Artwork ${index + 1} requires a title.`);
-          titleInput?.focus();
+      // Validate category
+      const categoryInput = document.querySelector('input[name="category"]:checked');
+      if (!categoryInput) {
+        alert('Please select a category.');
+        return;
+      }
+      if (categoryInput.value === 'Other') {
+        const otherCategory = document.getElementById('other-category');
+        if (!otherCategory.value.trim()) {
+          alert('Please specify the other category.');
+          otherCategory.focus();
           return;
         }
-        if (!category) {
-          alert(`Artwork ${index + 1} requires a category.`);
-          return;
-        }
-        if (!medium) {
-          alert(`Artwork ${index + 1} requires a medium.`);
-          mediumInput?.focus();
-          return;
-        }
-        if (!slot.querySelector(`input[name^="artworkFiles"]`)?.files?.length) {
-          alert(`Artwork ${index + 1} requires at least one file.`);
-          return;
-        }
-
-        allArtworks.push({ title, category, medium });
       }
 
-      // Collect all artwork files into a single DataTransfer
+      // Validate file
+      if (!fileInput.files.length) {
+        alert('Please upload at least one artwork file.');
+        return;
+      }
+
+      // Validate ownership confirmation
+      const ownershipCheck = document.getElementById('ownership-confirmation');
+      if (!ownershipCheck.checked) {
+        alert('Please confirm that you own the artworks you are uploading.');
+        return;
+      }
+
       const formData = new FormData(form);
-      // Clear previous artworkFiles
-      formData.delete('artworkFiles');
-
-      const allArtworkFiles = [];
-      for (const slot of slots) {
-        const fileInput = slot.querySelector('input[name^="artworkFiles"]');
-        for (const file of fileInput.files) {
-          allArtworkFiles.push(file);
-        }
-      }
-
-      // Add all artwork files
-      for (const file of allArtworkFiles) {
-        formData.append('artworkFiles', file);
-      }
-
       const submitBtn = form.querySelector('.register-button');
       latestRegistrationInfo = null;
       submissionSuccess.hidden = true;
@@ -1136,21 +860,11 @@
         if (resp.ok && result.ok && result.registrations) {
           latestRegistrationInfo = result;
           submissionSuccess.hidden = false;
-          document.getElementById('success-count').textContent = result.registrations.length;
-          document.getElementById('success-ids').textContent = result.registrations.map(r => r.id).join(', ');
+          document.getElementById('success-id').textContent = result.registrations[0].id;
           note.style.color = '#21c45d';
-          note.textContent = `${result.registrations.length} artwork(s) registered successfully!`;
+          note.textContent = 'Artwork registered successfully!';
           form.reset();
-          // Reset artwork slots
-          const container = document.getElementById('artwork-slots-container');
-          container.innerHTML = '';
-          artworkSlotCount = 0;
-          createArtworkSlot(0);
-          updateAddButtonVisibility();
-
-    document.getElementById('add-artwork-button').addEventListener('click', () => {
-      createArtworkSlot(artworkSlotCount);
-    });
+          document.getElementById('artwork-preview').hidden = true;
         } else {
           throw new Error(result.error || 'Server error');
         }
@@ -1161,14 +875,14 @@
         alert(`Registration failed: ${error.message}`);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Register All Artworks';
+        submitBtn.textContent = 'Register Artwork';
       }
     });
 
     saveRegistrationInfoButton.addEventListener('click', () => {
       if (!latestRegistrationInfo) return;
-      const info = latestRegistrationInfo;
-      let receiptHtml = `<!doctype html>
+      const info = latestRegistrationInfo.registrations[0];
+      const receiptHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1177,8 +891,6 @@
     body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; }
     h1 { text-transform: uppercase; }
     .id { background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 12px 0; word-break: break-all; }
-    .artwork { border: 1px solid #ddd; padding: 16px; margin: 12px 0; border-radius: 8px; }
-    .artwork h2 { margin-top: 0; }
     table { width: 100%; border-collapse: collapse; }
     td { padding: 8px; border-bottom: 1px solid #eee; }
     td:first-child { font-weight: bold; color: #666; width: 140px; }
@@ -1187,25 +899,20 @@
 <body>
   <h1>Registration Receipt</h1>
   <p>Fine Arts Exhibition ANU</p>
-  <div class="id"><strong>${info.registrations.map(r => r.id).join(', ')}</strong></div>
+  <div class="id"><strong>${info.id}</strong></div>
   <table>
-    <tr><td>Total Artworks</td><td>${info.registrations.length}</td></tr>
+    <tr><td>Artist</td><td>${info.student?.fullName || ''}</td></tr>
+    <tr><td>Batch</td><td>${info.student?.studentYear || ''}</td></tr>
+    <tr><td>Artwork</td><td>${info.artwork?.title || ''}</td></tr>
+    <tr><td>Category</td><td>${info.artwork?.category || ''}</td></tr>
+    <tr><td>Medium</td><td>${info.artwork?.medium || ''}</td></tr>
+    <tr><td>Dimensions</td><td>${info.artwork?.dimensions || ''}</td></tr>
+    <tr><td>Description</td><td>${info.artwork?.description || ''}</td></tr>
     <tr><td>Status</td><td>Awaiting Review</td></tr>
     <tr><td>Date</td><td>${new Date().toLocaleDateString()}</td></tr>
-  </table>`;
-
-      info.registrations.forEach(r => {
-        receiptHtml += `<div class="artwork"><h2>${r.artwork?.title || 'Untitled'}</h2>`;
-        receiptHtml += `<table>`;
-        if (r.artwork?.category) receiptHtml += `<tr><td>Category</td><td>${r.artwork.category}</td></tr>`;
-        if (r.artwork?.medium) receiptHtml += `<tr><td>Medium</td><td>${r.artwork.medium}</td></tr>`;
-        if (r.artwork?.dimensions) receiptHtml += `<tr><td>Dimensions</td><td>${r.artwork.dimensions}</td></tr>`;
-        if (r.student?.fullName) receiptHtml += `<tr><td>Artist</td><td>${r.student.fullName}</td></tr>`;
-        if (r.student?.studentYear) receiptHtml += `<tr><td>Batch</td><td>${r.student.studentYear}</td></tr>`;
-        receiptHtml += `</table></div>`;
-      });
-
-      receiptHtml += `</body></html>`;
+  </table>
+</body>
+</html>`;
 
       const blob = new Blob([receiptHtml], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
