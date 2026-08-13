@@ -767,7 +767,9 @@
           <p class="edit-status" id="edit-registration-status" aria-live="polite"></p>
         </section>
 
-        <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
+        <div id="artwork-slots-container"></div>
+
+<form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
           <fieldset>
             <legend>Artist Information</legend>
             <div class="field-grid">
@@ -794,6 +796,12 @@
               <input id="profile-picture" name="profilePicture" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
             </div>
           </fieldset>
+
+          <button type="button" class="add-artwork-button" id="add-artwork-button">
+            <span>+</span> Add Another Artwork
+          </button>
+
+          <label class="confirm-row" for="ownership-confirmation">
 
           <!-- Artwork slots -->
 
@@ -921,6 +929,10 @@
       artworkSlotCount++;
       updateAddButtonVisibility();
 
+    document.getElementById('add-artwork-button').addEventListener('click', () => {
+      createArtworkSlot(artworkSlotCount);
+    });
+
       // Setup category handlers
       const categoryInputs = slot.querySelectorAll(`input[name="category[${index}]"]`);
       categoryInputs.forEach(input => {
@@ -976,6 +988,10 @@
 
       artworkSlotCount = remainingSlots.length;
       updateAddButtonVisibility();
+
+    document.getElementById('add-artwork-button').addEventListener('click', () => {
+      createArtworkSlot(artworkSlotCount);
+    });
     }
 
     function updateAddButtonVisibility() {
@@ -1131,6 +1147,10 @@
           artworkSlotCount = 0;
           createArtworkSlot(0);
           updateAddButtonVisibility();
+
+    document.getElementById('add-artwork-button').addEventListener('click', () => {
+      createArtworkSlot(artworkSlotCount);
+    });
         } else {
           throw new Error(result.error || 'Server error');
         }
