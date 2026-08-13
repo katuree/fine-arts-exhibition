@@ -45,6 +45,7 @@ const MEGA_EMAIL = String(process.env.MEGA_EMAIL || '').trim();
 const MEGA_PASSWORD = String(process.env.MEGA_PASSWORD || '');
 const MEGA_ROOT_FOLDER = String(process.env.MEGA_ROOT_FOLDER || 'Fine Arts Exhibition').trim();
 const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
+const USE_LOCAL_DISK = USE_MEGA ? false : true;
 
 // ── Ensure local storage folders exist (non-blocking — if it fails, it will fail on first request)
 (async () => {
@@ -140,6 +141,10 @@ async function connectMega() {
   }
 
   megaRoots = { exhibitionRoot, artistsRoot, registeredRoot, approvedRoot };
+  if (!artistsRoot || !registeredRoot || !approvedRoot) {
+    console.error('MEGA root access failed — falling back to Local Disk');
+    megaRoots = null;
+  }
   console.log('Connected to MEGA successfully');
   return mega;
 }
