@@ -1228,6 +1228,9 @@
 
     // Always require the password every time admin.html is opened.
     showLoginPanel();
-  </script>
+  
+    // Real-time polling: refresh dashboard every 15 seconds
+    setInterval(loadDashboardData, 15000);
+</script>
 </body>
 </html>
