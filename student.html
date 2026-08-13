@@ -576,6 +576,9 @@
     }
 
     updateArtworkCount();
+
+    // Refresh artwork count in real time every 10 seconds
+    setInterval(updateArtworkCount, 10000);
   </script>
 </body>
 </html>
