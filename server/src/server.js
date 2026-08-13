@@ -107,13 +107,8 @@ async function connectMega() {
     password: MEGA_PASSWORD,
   }).ready;
 
-  // Ensure root folder exists at the MEGA root level
-  let exhibitionRoot = await ensureMegaFolder(mega.root, MEGA_ROOT_FOLDER);
-  if (!exhibitionRoot) {
-    // mega.root might not support mkdir — try mega.createFolder directly
-    exhibitionRoot = await mega.createFolder(MEGA_ROOT_FOLDER);
-  }
-
+  // mega.root is the Storage instance's root — use mega.createFolder for root-level folders
+  const exhibitionRoot = await mega.createFolder(MEGA_ROOT_FOLDER);
   const artistsRoot = await ensureMegaFolder(exhibitionRoot, 'Artists');
   const registeredRoot = await ensureMegaFolder(exhibitionRoot, 'Registered');
   const approvedRoot = await ensureMegaFolder(exhibitionRoot, 'Approved');
@@ -126,7 +121,7 @@ async function connectMega() {
   megaRoots = { exhibitionRoot, artistsRoot, registeredRoot, approvedRoot };
   if (!registeredRoot || !approvedRoot) {
     megaRoots = null;
-    console.error('MEGA folder setup failed — falling back to Local Disk');
+    console.error('MEGA folder setup failed');
   } else {
     console.log('Connected to MEGA successfully');
   }
