@@ -35,7 +35,7 @@ const BATCH_FOLDERS = [
 const ARTWORK_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 const PROFILE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
+const USE_MEGA = false;  // Disabled — MEGA API returns malformed responses
 
 const TEMP_DIR = path.join(os.tmpdir(), 'fine-arts-exhibition-incoming');
 await fsp.mkdir(TEMP_DIR, { recursive: true });
