@@ -108,8 +108,8 @@ async function connectMega() {
   }).ready;
 
   // mega.root is the Cloud Drive root folder (MutableFile)
-  // Check if 'Fine Arts Exhibition' already exists before creating
-  let exhibitionRoot = findChild(mega.root, MEGA_ROOT_FOLDER, true);
+  // mega.root.children is loaded by autoload — use it directly
+  let exhibitionRoot = mega.root.children?.find(c => c.name === MEGA_ROOT_FOLDER);
   if (!exhibitionRoot) {
     exhibitionRoot = await mega.root.mkdir(MEGA_ROOT_FOLDER);
   }
