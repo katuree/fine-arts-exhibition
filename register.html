@@ -950,9 +950,24 @@
               </section>
             </main>
             <script>
-              // TrueNAS API endpoint. This API runs on TrueNAS and stores files in the MEGA sync folder.
-              // If you expose it publicly later, replace this LAN URL with the public HTTPS URL.
-              const API_URL = 'http://192.168.1.45:8088';
+              function getApiUrl() {
+                if (typeof window !== 'undefined') {
+                  const params = new URLSearchParams(window.location.search);
+                  if (params.get('api')) return params.get('api').replace(/\/$/, '');
+                  const stored = localStorage.getItem('EXHIBITION_API_URL');
+                  if (stored) return stored.replace(/\/$/, '');
+                  if (window.location.protocol.startsWith('http')) {
+                    if (window.location.port === '8080' || window.location.port === '8088') {
+                      return window.location.origin;
+                    }
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                      return 'http://localhost:8080';
+                    }
+                  }
+                }
+                return 'http://192.168.1.45:8088';
+              }
+              const API_URL = getApiUrl();
 
               const categoryInputs = document.querySelectorAll('input[name="category"]');
               const otherCategoryField = document.getElementById('other-category-field');

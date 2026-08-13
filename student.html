@@ -517,16 +517,24 @@
   </main>
 
   <script>
-    const API_URL = 'http://192.168.1.45:8088';
-
-    function shouldUseLanApi() {
-      const host = window.location.hostname;
-      return window.location.protocol === 'file:'
-        || host === 'localhost'
-        || host === '127.0.0.1'
-        || host.startsWith('192.168.')
-        || host.endsWith('.local');
+    function getApiUrl() {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('api')) return params.get('api').replace(/\/$/, '');
+        const stored = localStorage.getItem('EXHIBITION_API_URL');
+        if (stored) return stored.replace(/\/$/, '');
+        if (window.location.protocol.startsWith('http')) {
+          if (window.location.port === '8080' || window.location.port === '8088') {
+            return window.location.origin;
+          }
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8080';
+          }
+        }
+      }
+      return 'http://192.168.1.45:8088';
     }
+    const API_URL = getApiUrl();
 
     async function fetchStatsJson() {
       const response = await fetch(`./stats.json?v=${Date.now()}`, { cache: 'no-store' });
@@ -545,8 +553,13 @@
       if (!counter) return;
 
       try {
-        const stats = shouldUseLanApi() ? await fetchLanStats() : await fetchStatsJson();
-        const total = Number(stats.totalArtworksRegistered || 0);
+        let stats = null;
+        try {
+          stats = await fetchLanStats();
+        } catch (lanError) {
+          stats = await fetchStatsJson();
+        }
+        const total = Number(stats?.totalArtworksRegistered || 0);
         counter.textContent = String(total);
       } catch (error) {
         console.warn('Could not update artwork count', error);

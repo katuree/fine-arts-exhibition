@@ -1,0 +1,16 @@
+{
+  "name": "college-art-exhibition-website",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/src/server.js",
+    "dev": "node server/src/server.js",
+    "server": "npm --prefix server start",
+    "install:server": "npm --prefix server install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "College Fine Arts Exhibition Website & Registration API"
+}

@@ -3,1574 +3,1188 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register Artwork | Fine Arts Exhibition ANU</title>
+  <title>Admin Dashboard - Fine Arts Exhibition ANU</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital@1&display=swap');
-
     :root {
+      --ink: #050505;
       --paper: #ffffff;
-      --ink: #070707;
-      --soft-ink: #626262;
-      --line: #d9e0e2;
-      --line-strong: #bfc7c9;
-      --focus: #cbd5d8;
-      --shadow: 0 24px 70px rgba(22, 31, 36, 0.10);
-      --page-pad: clamp(18px, 6vw, 92px);
+      --muted: #f4f6f7;
+      --muted-strong: #e6ebed;
+      --line: #d4dcdf;
+      --soft-ink: #555f66;
+      --danger: #b42318;
+      --danger-soft: #fff0ef;
+      --success: #157f3b;
+      --success-soft: #eefbf3;
+      --warning: #a15c00;
+      --warning-soft: #fff6e6;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+    * { box-sizing: border-box; }
 
     body {
+      margin: 0;
       min-height: 100vh;
-      color: var(--ink);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--paper);
-      overflow-x: hidden;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    .page-shell {
-      width: 100%;
-      min-height: 100vh;
-      padding: clamp(28px, 5vw, 64px) var(--page-pad) 36px;
-    }
-
-    .top-link {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: clamp(28px, 5vw, 58px);
-      color: var(--soft-ink);
-      font-size: 0.78rem;
-      font-weight: 900;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .top-link:hover,
-    .top-link:focus-visible {
-      color: var(--ink);
-      outline: 2px solid var(--focus);
-      outline-offset: 6px;
-      border-radius: 999px;
-    }
-
-    .registration-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
-      gap: clamp(28px, 5vw, 72px);
-      align-items: start;
-    }
-
-    .intro {
-      position: sticky;
-      top: 36px;
-      display: grid;
-      gap: 22px;
-    }
-
-    .eyebrow {
-      color: var(--soft-ink);
-      font-size: 0.8rem;
-      font-weight: 900;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      max-width: 700px;
-      font-size: clamp(3.8rem, 7vw, 7.6rem);
-      line-height: 0.86;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      text-transform: uppercase;
-    }
-
-    .intro p {
-      max-width: 520px;
-      color: var(--soft-ink);
-      font-size: clamp(1rem, 1.45vw, 1.2rem);
-      line-height: 1.7;
-    }
-
-    .form-card {
-      width: 100%;
-      padding: clamp(22px, 4vw, 40px);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: var(--paper);
-      box-shadow: var(--shadow);
-    }
-
-    form {
-      display: grid;
-      gap: clamp(26px, 4vw, 38px);
-    }
-
-    fieldset {
-      min-width: 0;
-      display: grid;
-      gap: 18px;
-      border: 0;
-    }
-
-    legend {
-      width: 100%;
-      margin-bottom: 4px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--line);
-      font-size: clamp(1.65rem, 3.2vw, 3rem);
-      line-height: 0.98;
-      font-weight: 900;
-      letter-spacing: -0.035em;
-      text-transform: uppercase;
-    }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .field,
-    .radio-group,
-    .confirm-row {
-      display: grid;
-      gap: 8px;
-    }
-
-    .other-category-field[hidden] {
-      display: none;
-    }
-
-    label,
-    .group-label {
-      color: var(--ink);
-      font-size: 0.8rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .required {
-      color: var(--ink);
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 46px;
-      border: 1px solid var(--line-strong);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--ink);
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 160ms ease, box-shadow 160ms ease;
-    }
-
-    textarea {
-      min-height: 124px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--ink);
-      box-shadow: 0 0 0 4px var(--focus);
-    }
-
-    .category-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .radio-card,
-    .confirm-row {
-      min-height: 46px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--soft-ink);
-      cursor: pointer;
-    }
-
-    .radio-card input,
-    .confirm-row input {
-      width: 18px;
-      height: 18px;
-      min-height: 18px;
-      accent-color: var(--ink);
-    }
-
-    .radio-card span,
-    .confirm-row span {
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0;
-      text-transform: none;
-    }
-
-    .radio-card:has(input:checked) {
-      border-color: var(--ink);
-      color: var(--ink);
-      background: #f7f8f8;
-    }
-
-    .upload-box {
-      position: relative;
-      min-height: 210px;
-      display: grid;
-      place-items: center;
-      padding: 28px;
-      border: 2px dashed var(--line-strong);
-      border-radius: 10px;
-      text-align: center;
-      transition: border-color 160ms ease, background 160ms ease;
-    }
-
-    .upload-box input {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .upload-copy {
-      display: grid;
-      gap: 12px;
-      pointer-events: none;
-    }
-
-    .upload-copy strong {
-      font-size: clamp(1.35rem, 3vw, 2.2rem);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      text-transform: uppercase;
-    }
-
-    .upload-copy span {
-      color: var(--soft-ink);
-      font-size: 0.8rem;
-      font-weight: 900;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-    }
-
-    .upload-box:hover,
-    .upload-box:focus-within {
-      border-color: var(--ink);
-      background: #f7f8f8;
-    }
-
-    .upload-preview {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #fbfbfb;
-    }
-
-    .upload-preview[hidden] {
-      display: none;
-    }
-
-    .upload-preview-title {
-      color: var(--soft-ink);
-      font-size: 0.74rem;
-      font-weight: 900;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    .upload-preview-count {
-      color: var(--soft-ink);
-      font-size: 0.86rem;
-      font-weight: 700;
-      line-height: 1.5;
-    }
-
-    .preview-grid {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-      gap: 12px;
-      align-items: start;
-    }
-
-    .preview-item {
-      min-width: 0;
-      max-width: 100%;
-      display: grid;
-      gap: 8px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      overflow: hidden;
-    }
-
-    .preview-item img {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      height: clamp(160px, 32vw, 240px);
-      object-fit: contain;
-      border: 0;
-      border-radius: 8px;
-      background: #f7f8f8;
-    }
-
-    .preview-caption {
-      color: var(--soft-ink);
-      font-size: 0.76rem;
-      font-weight: 800;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-
-    .remove-preview-button {
-      min-height: 40px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 14px;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--ink);
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .remove-preview-button:hover,
-    .remove-preview-button:focus-visible {
-      background: var(--ink);
-      color: #fff;
-      outline: 2px solid var(--focus);
-      outline-offset: 3px;
-    }
-
-    .file-preview-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      min-height: 74px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    .file-preview-name {
-      min-width: 0;
-      color: var(--ink);
-      font-size: 1rem;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .file-preview-type {
-      flex: 0 0 auto;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: var(--ink);
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .confirm-row {
-      color: var(--ink);
-      cursor: pointer;
-    }
-
-    .submit-row {
-      display: flex;
-      justify-content: center;
-    }
-
-    .register-button {
-      min-height: 50px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 26px;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      background: var(--ink);
-      color: #fff;
-      font-size: 0.82rem;
-      font-weight: 900;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: transform 160ms ease, box-shadow 160ms ease;
-    }
-
-    .register-button:hover,
-    .register-button:focus-visible {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 28px rgba(7, 7, 7, 0.18);
-      outline: 2px solid var(--focus);
-      outline-offset: 4px;
-    }
-
-    .note {
-      color: var(--soft-ink);
-      font-size: 0.92rem;
-      line-height: 1.6;
-      text-align: center;
-    }
-
-
-    .edit-registration-panel {
-      display: grid;
-      gap: 14px;
-      margin-bottom: 24px;
-      padding: clamp(18px, 3vw, 24px);
-      border: 1px solid var(--line-strong);
-      border-radius: 14px;
-      background: #f8fafb;
-    }
-
-
-    .edit-registration-panel[hidden] {
-      display: none !important;
-    }
-
-
-    #artwork-registration-form[hidden] {
-      display: none !important;
-    }
-
-    .edit-registration-panel h2 {
-      font-size: clamp(1.35rem, 3vw, 2.2rem);
-      line-height: 1;
-      font-weight: 950;
-      letter-spacing: -0.035em;
-      text-transform: uppercase;
-    }
-
-    .edit-registration-panel p {
-      color: var(--soft-ink);
-      line-height: 1.6;
-    }
-
-    .edit-registration-controls {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .edit-registration-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .small-action-button {
-      min-height: 46px;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      background: var(--ink);
-      color: var(--paper);
-      padding: 12px 16px;
-      cursor: pointer;
-      font-size: 0.76rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .small-action-button.secondary {
       background: var(--paper);
       color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
     }
 
-    .edit-mode-badge {
-      display: inline-flex;
-      width: fit-content;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 0.74rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .edit-status {
-      min-height: 22px;
-      color: var(--soft-ink);
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-
-    .current-files-panel {
-      min-width: 0;
-      max-width: 100%;
-      display: grid;
-      gap: 14px;
-      margin-top: 16px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-      overflow: hidden;
-    }
-
-    .current-files-panel[hidden] {
-      display: none;
-    }
-
-    .current-files-title {
-      font-size: 0.82rem;
-      font-weight: 900;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .current-files-help {
-      color: var(--soft-ink);
-      font-size: 0.9rem;
-      line-height: 1.55;
-    }
-
-    .current-file-actions {
+    body.login-screen {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      padding: 32px;
     }
 
-    .current-file-link {
-      color: var(--ink);
-      font-size: 0.78rem;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-
-    .preview-item.marked-for-removal {
-      opacity: 0.58;
-      border-style: dashed;
-      background: #f7f8f8;
-    }
-
-    .removed-file-note {
-      color: var(--soft-ink);
-      font-size: 0.74rem;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-
-    .current-files-panel .preview-grid {
-      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-    }
-
-    .current-files-panel .preview-item img {
-      height: clamp(150px, 30vw, 210px);
-    }
-
-
-
-    .submission-success {
-      display: grid;
-      gap: 18px;
-      margin-top: 24px;
-      padding: clamp(22px, 4vw, 34px);
+    a, button {
       border: 2px solid var(--ink);
-      border-radius: 18px;
-      background: #ffffff;
-      color: var(--ink);
-      box-shadow: var(--shadow);
-    }
-
-    .submission-success[hidden] { display: none; }
-
-    .submission-success-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: clamp(1.7rem, 4vw, 3.2rem);
-      line-height: 0.95;
-      font-weight: 950;
-      letter-spacing: -0.04em;
-      text-transform: uppercase;
-    }
-
-    .success-check {
-      display: inline-grid;
-      width: 42px;
-      height: 42px;
-      place-items: center;
-      border-radius: 999px;
-      background: var(--ink);
-      color: var(--paper);
-      font-size: 1.4rem;
-      line-height: 1;
-      flex: 0 0 auto;
-    }
-
-    .success-field { display: grid; gap: 6px; }
-
-    .success-label {
-      color: var(--soft-ink);
-      font-size: 0.78rem;
-      font-weight: 900;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .success-value {
-      font-size: clamp(1.1rem, 2vw, 1.55rem);
-      font-weight: 850;
-      line-height: 1.35;
-    }
-
-    .success-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: var(--ink);
-    }
-
-
-    .success-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 4px;
-    }
-
-    .success-action-button {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--ink);
       border-radius: 999px;
       background: var(--ink);
       color: var(--paper);
       padding: 12px 18px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
+      text-decoration: none;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+      font-size: 12px;
+      cursor: pointer;
       transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
     }
 
-    .success-action-button.secondary {
+    a:hover, button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    a.secondary, button.secondary-button {
       background: var(--paper);
       color: var(--ink);
     }
 
-    .success-action-button:hover,
-    .success-action-button:focus-visible {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 22px rgba(7, 7, 7, 0.14);
-      outline: 2px solid var(--focus);
-      outline-offset: 4px;
+    button.danger-button {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: var(--paper);
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-      }
+    button.warning-button {
+      border-color: var(--warning);
+      background: var(--warning-soft);
+      color: var(--warning);
     }
 
-    @media (max-width: 980px) {
-      .registration-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .intro {
-        position: static;
-        text-align: center;
-        justify-items: center;
-      }
-
-      h1 {
-        font-size: clamp(4rem, 13vw, 7rem);
-      }
+    .login-panel {
+      width: min(760px, 100%);
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      padding: clamp(28px, 5vw, 56px);
+      text-align: center;
     }
 
-    @media (max-width: 640px) {
-      .page-shell {
-        padding: 22px 18px 28px;
-      }
-
-      .top-link {
-        margin-bottom: 28px;
-      }
-
-      h1 {
-        font-size: clamp(3.1rem, 15vw, 5rem);
-        line-height: 0.92;
-      }
-
-      .form-card {
-        padding: 20px;
-      }
-
-      .field-grid,
-      .category-grid,
-      .preview-grid,
-      .current-files-panel .preview-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .preview-item img,
-      .current-files-panel .preview-item img {
-        height: clamp(140px, 58vw, 220px);
-      }
-
-
-      .edit-registration-controls {
-        grid-template-columns: 1fr;
-      }
-
-      .small-action-button {
-        width: 100%;
-      }
-
-      legend {
-        font-size: clamp(2rem, 10vw, 3rem);
-      }
-
-      .register-button {
-        width: 100%;
-      }
+    .login-panel[hidden], .admin-shell[hidden], .artwork-modal[hidden] {
+      display: none !important;
     }
-  </style>
-</head>
-<body>
-  <main class="page-shell">
-    <a class="top-link" href="student.html" aria-label="Back to student page">← Fine Arts Exhibition ANU</a>
 
-    <section class="registration-layout" aria-label="Artwork registration page">
-      <div class="intro">
-        <p class="eyebrow">Artwork Registration</p>
-        <h1>Register Your Artwork</h1>
-        <p>Enter student details, artwork details, and upload the artwork file for review.</p>
-      </div>
+    h1, h2, h3, p { margin-top: 0; }
 
-      <div class="form-card">
-        <section class="edit-registration-panel" id="edit-registration" aria-label="Edit existing registration" hidden>
-          <h2>Edit Existing Registration</h2>
-          <p>Already registered? Enter your Registration ID to load and update the application.</p>
-          <div class="edit-registration-controls">
-            <div class="field">
-              <label for="edit-registration-id">Registration ID</label>
-              <input id="edit-registration-id" type="text" autocomplete="off" placeholder="Paste Registration ID" />
-            </div>
-            <button class="small-action-button" type="button" id="load-registration-button">Load</button>
-            <button class="small-action-button secondary" type="button" id="cancel-edit-button" hidden>New Registration</button>
-          </div>
-          <span class="edit-mode-badge" id="edit-mode-badge" hidden>Edit Mode</span>
-          <p class="edit-status" id="edit-registration-status" aria-live="polite"></p>
-        </section>
+    h1 {
+      margin-bottom: 18px;
+      font-size: clamp(44px, 9vw, 104px);
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
 
-        <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
-          <fieldset>
-            <legend>Artist Information</legend>
-            <div class="field-grid">
-              <div class="field">
-                <label for="full-name">Full Name <span class="required">*</span></label>
-                <input id="full-name" name="fullName" type="text" autocomplete="name" required />
-              </div>
-              <div class="field">
-                <label for="student-year">Batch <span class="required">*</span></label>
-                <select id="student-year" name="studentYear" required>
-                  <option value="" selected disabled>Select batch</option>
-                  <option value="2020 Batch">2020 Batch</option>
-                  <option value="2021 Batch">2021 Batch</option>
-                  <option value="2022 Batch">2022 Batch</option>
-                  <option value="2023 Batch">2023 Batch</option>
-                  <option value="2024 Batch">2024 Batch</option>
-                  <option value="2025 Batch">2025 Batch</option>
-                </select>
-              </div>
-            </div>
+    .login-panel p {
+      margin: 24px auto 0;
+      max-width: 560px;
+      color: var(--soft-ink);
+      font-size: 17px;
+      line-height: 1.6;
+    }
 
-            <div class="field">
-              <label for="profile-picture">Profile Picture</label>
-              <input id="profile-picture" name="profilePicture" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
-            </div>
-          </fieldset>
+    .admin-password-form {
+      margin-top: 32px;
+      display: grid;
+      gap: 16px;
+      text-align: left;
+    }
 
-          <fieldset>
-            <legend>Artwork Information</legend>
-            <div class="field">
-              <label for="artwork-title">Artwork Title <span class="required">*</span></label>
-              <input id="artwork-title" name="artworkTitle" type="text" required />
-            </div>
+    .admin-password-form > div {
+      display: grid;
+      gap: 9px;
+    }
 
-            <div class="radio-group">
-              <p class="group-label">Category <span class="required">*</span></p>
-              <div class="category-grid">
-                <label class="radio-card"><input type="radio" name="category" value="Painting" required /> <span>Painting</span></label>
-                <label class="radio-card"><input type="radio" name="category" value="Drawing" /> <span>Drawing</span></label>
-                <label class="radio-card"><input type="radio" name="category" value="Sculpture" /> <span>Sculpture</span></label>
-                <label class="radio-card"><input type="radio" name="category" value="Printmaking" /> <span>Printmaking</span></label>
-                <label class="radio-card"><input type="radio" name="category" value="Installation" /> <span>Installation</span></label>
-                <label class="radio-card"><input id="category-other" type="radio" name="category" value="Other" /> <span>Other</span></label>
-              </div>
-            </div>
+    label, .small-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.1em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
 
-            <div class="field other-category-field" id="other-category-field" hidden>
-              <label for="other-category">Other Category <span class="required">*</span></label>
-              <input id="other-category" name="otherCategory" type="text" placeholder="Type the category" />
-            </div>
+    input[type="password"] {
+      width: 100%;
+      border: 2px solid #050505;
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--ink);
+      font: inherit;
+      font-size: 16px;
+      line-height: 1.3;
+    }
 
-            <div class="field-grid">
-              <div class="field">
-                <label for="medium">Medium <span class="required">*</span></label>
-                <input id="medium" name="medium" type="text" required />
-              </div>
-              <div class="field">
-                <label for="dimensions">Dimensions</label>
-                <input id="dimensions" name="dimensions" type="text" placeholder="Example: 24 × 36 in" />
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="description">Description</label>
-              <textarea id="description" name="description"></textarea>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Upload Artwork</legend>
-            <label class="upload-box" for="artwork-file">
-              <input id="artwork-file" name="artworkFiles[]" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple required />
-              <span class="upload-copy">
-                <strong>Drag artworks here</strong>
-                <span>JPG / PNG / PDF • Multiple files allowed</span>
-              </span>
-            </label>
-            <div class="upload-preview" id="artwork-preview" aria-live="polite" hidden>
-              <p class="upload-preview-title">Artwork Previews</p>
-              <p class="upload-preview-count" id="artwork-preview-count"></p>
-              <div id="artwork-preview-content"></div>
-            </div>
-            <div class="current-files-panel" id="current-files-panel" aria-live="polite" hidden>
-              <p class="current-files-title">Current Uploaded Artwork</p>
-              <p class="current-files-help">These files are already saved. They will stay unless you choose new files above.</p>
-              <div id="current-files-content"></div>
-            </div>
-          </fieldset>
-
-          <label class="confirm-row" for="ownership-confirmation">
-            <input id="ownership-confirmation" name="ownershipConfirmation" type="checkbox" required />
-            <span>I confirm this artwork is mine.</span>
-          </label>
-
-          <div class="submit-row">
-                      <button class="register-button" type="submit">Register Artwork</button>
-                    </div>
-
-                    <p class="note" aria-live="polite">Uploads will be saved to TrueNAS / MEGA.</p>
-                  </form>
-
-                  <section id="submission-success" class="submission-success" aria-live="polite" hidden>
-                    <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> <span id="success-title-text">Registration Successful</span></h2>
-                    <div class="success-field">
-                      <span class="success-label">Registration ID</span>
-                      <span class="success-value" id="success-submission-id"></span>
-                    </div>
-                    <div class="success-field">
-                      <span class="success-label">Artwork</span>
-                      <span class="success-value" id="success-artwork-title"></span>
-                    </div>
-                    <div class="success-field">
-                      <span class="success-label">Status</span>
-                      <span class="success-value success-status"><span class="status-dot" aria-hidden="true"></span><span id="success-status-text">Awaiting Review</span></span>
-                    </div>
-                    <div class="success-actions">
-                      <button class="success-action-button" type="button" id="save-registration-info">Save Registration Info</button>
-                    </div>
-                  </section>
-                </div>
-              </section>
-            </main>
-            <script>
-              // TrueNAS API endpoint. This API runs on TrueNAS and stores files in the MEGA sync folder.
-              // If you expose it publicly later, replace this LAN URL with the public HTTPS URL.
-              const API_URL = 'http://192.168.1.45:8088';
-
-              const categoryInputs = document.querySelectorAll('input[name="category"]');
-              const otherCategoryField = document.getElementById('other-category-field');
-              const otherCategoryInput = document.getElementById('other-category');
-              const artworkFileInput = document.getElementById('artwork-file');
-              const artworkPreview = document.getElementById('artwork-preview');
-              const artworkPreviewCount = document.getElementById('artwork-preview-count');
-              const artworkPreviewContent = document.getElementById('artwork-preview-content');
-              const currentFilesPanel = document.getElementById('current-files-panel');
-              const currentFilesContent = document.getElementById('current-files-content');
-              const form = document.getElementById('artwork-registration-form');
-              const isEditPage = new URLSearchParams(window.location.search).get('mode') === 'edit';
-              const note = form.querySelector('.note');
-              const submissionSuccess = document.getElementById('submission-success');
-              const successSubmissionId = document.getElementById('success-submission-id');
-              const successArtworkTitle = document.getElementById('success-artwork-title');
-              const successStatusText = document.getElementById('success-status-text');
-              const saveRegistrationInfoButton = document.getElementById('save-registration-info');
-              const editRegistrationIdInput = document.getElementById('edit-registration-id');
-              const loadRegistrationButton = document.getElementById('load-registration-button');
-              const cancelEditButton = document.getElementById('cancel-edit-button');
-              const editModeBadge = document.getElementById('edit-mode-badge');
-              const editRegistrationStatus = document.getElementById('edit-registration-status');
-              const successTitleText = document.getElementById('success-title-text');
-              let editingRegistrationId = null;
-              let latestRegistrationInfo = null;
-              let currentRegistrationFiles = [];
-              let existingFilesToRemove = new Set();
-              let artworkPreviewUrls = [];
-              let selectedArtworkFiles = [];
-
-              note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
-
-              function updateOtherCategoryField() {
-                const selectedCategory = document.querySelector('input[name="category"]:checked');
-                const isOtherSelected = selectedCategory?.value === 'Other';
-                otherCategoryField.hidden = !isOtherSelected;
-                otherCategoryInput.required = isOtherSelected;
-                if (!isOtherSelected) otherCategoryInput.value = '';
-              }
-
-              categoryInputs.forEach((input) => input.addEventListener('change', updateOtherCategoryField));
-
-              function clearArtworkPreview() {
-                artworkPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-                artworkPreviewUrls = [];
-                artworkPreviewCount.textContent = '';
-                artworkPreviewContent.innerHTML = '';
-                artworkPreview.hidden = true;
-              }
-
-              function syncArtworkFileInput() {
-                if (typeof DataTransfer === 'undefined') return;
-                try {
-                  const dataTransfer = new DataTransfer();
-                  selectedArtworkFiles.forEach((file) => dataTransfer.items.add(file));
-                  artworkFileInput.files = dataTransfer.files;
-                } catch (error) {
-                  console.warn('Could not sync edited file list back to input:', error);
-                }
-              }
-
-              function removeArtworkFile(indexToRemove) {
-                selectedArtworkFiles = selectedArtworkFiles.filter((_, index) => index !== indexToRemove);
-                syncArtworkFileInput();
-                renderArtworkPreviews();
-              }
-
-              function clearCurrentFilesPreview() {
-                currentRegistrationFiles = [];
-                existingFilesToRemove.clear();
-                currentFilesContent.innerHTML = '';
-                currentFilesPanel.hidden = true;
-              }
-
-              function fileRemovalKey(file) {
-                return file.storedName || file.originalName || file.megaSyncPath || '';
-              }
-
-              function removeExistingFile(fileKey) {
-                if (!fileKey) return;
-                existingFilesToRemove.add(fileKey);
-                renderCurrentFilesPreview(currentRegistrationFiles);
-              }
-
-              function undoRemoveExistingFile(fileKey) {
-                if (!fileKey) return;
-                existingFilesToRemove.delete(fileKey);
-                renderCurrentFilesPreview(currentRegistrationFiles);
-              }
-
-              function renderCurrentFilesPreview(files = []) {
-                currentRegistrationFiles = Array.isArray(files) ? files : [];
-                currentFilesContent.innerHTML = '';
-                if (!currentRegistrationFiles.length) {
-                  currentFilesPanel.hidden = true;
-                  return;
-                }
-
-                currentFilesPanel.hidden = false;
-                const previewGrid = document.createElement('div');
-                previewGrid.className = 'preview-grid';
-                const remainingCount = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file))).length;
-
-                currentRegistrationFiles.forEach((file) => {
-                  const previewItem = document.createElement('div');
-                  previewItem.className = 'preview-item';
-                  const fileKey = fileRemovalKey(file);
-                  const isMarkedForRemoval = existingFilesToRemove.has(fileKey);
-                  if (isMarkedForRemoval) previewItem.classList.add('marked-for-removal');
-
-                  const fileUrl = file.url || `${API_URL}/storage/${String(file.megaSyncPath || '').split('/').map(encodeURIComponent).join('/')}`;
-                  const mimeType = file.mimeType || '';
-                  const fileName = file.originalName || file.storedName || 'Artwork file';
-
-                  if (mimeType.startsWith('image/') && fileUrl) {
-                    const image = document.createElement('img');
-                    image.src = fileUrl;
-                    image.alt = `Current uploaded artwork: ${fileName}`;
-                    image.loading = 'lazy';
-                    previewItem.appendChild(image);
-                  } else {
-                    const fileCard = document.createElement('div');
-                    fileCard.className = 'file-preview-card';
-                    fileCard.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${mimeType === 'application/pdf' ? 'PDF' : 'File'}</span>`;
-                    fileCard.querySelector('.file-preview-name').textContent = fileName;
-                    previewItem.appendChild(fileCard);
-                  }
-
-                  const caption = document.createElement('p');
-                  caption.className = 'preview-caption';
-                  caption.textContent = fileName;
-                  previewItem.appendChild(caption);
-
-                  const actions = document.createElement('div');
-                  actions.className = 'current-file-actions';
-                  if (fileUrl) {
-                    const link = document.createElement('a');
-                    link.className = 'current-file-link';
-                    link.href = fileUrl;
-                    link.target = '_blank';
-                    link.rel = 'noopener';
-                    link.textContent = 'Open';
-                    actions.appendChild(link);
-                  }
-
-                  const removeButton = document.createElement('button');
-                  removeButton.className = 'remove-preview-button';
-                  removeButton.type = 'button';
-                  removeButton.textContent = isMarkedForRemoval ? 'Undo Remove' : 'Remove';
-                  removeButton.setAttribute('aria-label', `${isMarkedForRemoval ? 'Undo remove' : 'Remove'} ${fileName}`);
-                  removeButton.addEventListener('click', () => {
-                    if (isMarkedForRemoval) undoRemoveExistingFile(fileKey);
-                    else removeExistingFile(fileKey);
-                  });
-                  actions.appendChild(removeButton);
-                  previewItem.appendChild(actions);
-
-                  if (isMarkedForRemoval) {
-                    const removedNote = document.createElement('p');
-                    removedNote.className = 'removed-file-note';
-                    removedNote.textContent = 'Will be removed after update';
-                    previewItem.appendChild(removedNote);
-                  }
-
-                  previewGrid.appendChild(previewItem);
-                });
-
-                currentFilesContent.appendChild(previewGrid);
-                editRegistrationStatus.textContent = `${remainingCount} current file${remainingCount === 1 ? '' : 's'} will remain. Upload new files to replace all current files.`;
-              }
-
-              function renderArtworkPreviews() {
-                const files = selectedArtworkFiles;
-                clearArtworkPreview();
-                if (!files.length) return;
-                artworkPreview.hidden = false;
-                artworkPreviewCount.textContent = `${files.length} file${files.length === 1 ? '' : 's'} selected`;
-                const previewGrid = document.createElement('div');
-                previewGrid.className = 'preview-grid';
-                files.forEach((file, index) => {
-                  const previewItem = document.createElement('div');
-                  previewItem.className = 'preview-item';
-                  if (file.type.startsWith('image/')) {
-                    const artworkPreviewUrl = URL.createObjectURL(file);
-                    artworkPreviewUrls.push(artworkPreviewUrl);
-                    const image = document.createElement('img');
-                    image.src = artworkPreviewUrl;
-                    image.alt = `Preview of ${file.name}`;
-                    previewItem.appendChild(image);
-                  } else {
-                    const fileCard = document.createElement('div');
-                    fileCard.className = 'file-preview-card';
-                    fileCard.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${file.type === 'application/pdf' ? 'PDF' : 'File'}</span>`;
-                    fileCard.querySelector('.file-preview-name').textContent = file.name;
-                    previewItem.appendChild(fileCard);
-                  }
-                  const caption = document.createElement('p');
-                  caption.className = 'preview-caption';
-                  caption.textContent = file.name;
-                  previewItem.appendChild(caption);
-                  const removeButton = document.createElement('button');
-                  removeButton.className = 'remove-preview-button';
-                  removeButton.type = 'button';
-                  removeButton.textContent = 'Remove';
-                  removeButton.setAttribute('aria-label', `Remove ${file.name}`);
-                  removeButton.addEventListener('click', () => removeArtworkFile(index));
-                  previewItem.appendChild(removeButton);
-                  previewGrid.appendChild(previewItem);
-                });
-                artworkPreviewContent.appendChild(previewGrid);
-              }
-
-              function updateArtworkPreview() {
-                submissionSuccess.hidden = true;
-                selectedArtworkFiles = Array.from(artworkFileInput.files || []);
-                if (selectedArtworkFiles.length) {
-                  existingFilesToRemove.clear();
-                  if (editingRegistrationId && currentRegistrationFiles.length) {
-                    editRegistrationStatus.textContent = 'New files selected. Updating will replace all current uploaded artwork files.';
-                    renderCurrentFilesPreview(currentRegistrationFiles);
-                  }
-                }
-                renderArtworkPreviews();
-              }
-              artworkFileInput.addEventListener('change', updateArtworkPreview);
-
-              function safeFilePart(value) {
-                return String(value || 'registration')
-                  .trim()
-                  .replace(/[^a-z0-9._-]+/gi, '-')
-                  .replace(/^-+|-+$/g, '')
-                  .slice(0, 80) || 'registration';
-              }
-
-              function escapeHtml(value) {
-                return String(value ?? '')
-                  .replaceAll('&', '&amp;')
-                  .replaceAll('<', '&lt;')
-                  .replaceAll('>', '&gt;')
-                  .replaceAll('"', '&quot;')
-                  .replaceAll("'", '&#39;');
-              }
-
-              function buildRegistrationReceiptHtml(info) {
-                const fields = [
-                  ['Registration ID', info.id],
-                  ['Student Name', info.studentName],
-                  ['Batch', info.studentYear],
-                  ['Artwork Title', info.artworkTitle],
-                  ['Category', info.category],
-                  ['Medium', info.medium],
-                  ['Status', info.status],
-                  ['Saved At', info.savedAt]
-                ].filter(([, value]) => value);
-
-                const fieldRows = fields.map(([label, value]) => `
-                  <div class="field">
-                    <span>${escapeHtml(label)}</span>
-                    <strong>${escapeHtml(value)}</strong>
-                  </div>`).join('');
-
-                const description = info.description ? `
-                  <section class="description">
-                    <span>Description</span>
-                    <p>${escapeHtml(info.description)}</p>
-                  </section>` : '';
-
-                return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registration Receipt - ${escapeHtml(info.id)}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
+    .auth-message {
+      min-height: 22px;
       margin: 0;
+      color: var(--danger);
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .actions {
+      margin-top: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .admin-shell {
       min-height: 100vh;
+      padding: clamp(18px, 3vw, 36px);
+      background:
+        linear-gradient(135deg, rgba(5, 5, 5, 0.04), transparent 32%),
+        var(--paper);
+    }
+
+    .admin-dashboard {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 22px;
+    }
+
+    .admin-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      padding: clamp(22px, 4vw, 42px);
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin-bottom: 10px;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .admin-title {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(42px, 8vw, 96px);
+      line-height: 0.88;
+      letter-spacing: -0.075em;
+      text-transform: uppercase;
+    }
+
+    .admin-subtitle {
+      margin: 16px 0 0;
+      max-width: 700px;
+      color: var(--soft-ink);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric-card {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--paper);
+    }
+
+    .metric-label {
+      margin: 0 0 10px;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 0.9;
+      font-weight: 950;
+      letter-spacing: -0.07em;
+    }
+
+    .dashboard-section {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 14px 42px rgba(0,0,0,.07);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--muted);
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 44px);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      text-transform: uppercase;
+    }
+
+    .section-header p {
+      margin: 6px 0 0;
+      color: var(--soft-ink);
+      line-height: 1.45;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #fbfcfc;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background 150ms ease;
+    }
+
+    tbody tr:hover {
+      background: var(--muted);
+    }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
       display: grid;
       place-items: center;
-      padding: 32px;
-      background: #f3f4f4;
-      color: #050505;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-    .receipt {
-      width: min(760px, 100%);
-      border: 1px solid #d7dddd;
-      border-radius: 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
       overflow: hidden;
-      background: #fff;
-      box-shadow: 0 24px 70px rgba(0,0,0,.12);
+      background: var(--muted);
+      color: var(--soft-ink);
+      font-weight: 950;
+      letter-spacing: -0.08em;
     }
-    .header {
-      padding: 34px;
-      background: #050505;
-      color: #fff;
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
-    .eyebrow {
-      margin: 0 0 12px;
-      color: #d6d6d6;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-    }
-    h1 {
+
+    .student-name, .artwork-name {
       margin: 0;
-      font-size: clamp(36px, 8vw, 72px);
-      line-height: .86;
-      letter-spacing: -.07em;
-      text-transform: uppercase;
+      font-weight: 900;
     }
+
+    .muted-text {
+      margin: 4px 0 0;
+      color: var(--soft-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 22px;
-      padding: 10px 14px;
-      border: 1px solid rgba(255,255,255,.35);
+      justify-content: center;
+      min-width: 92px;
+      padding: 8px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .12em;
+      font-weight: 950;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    .dot { width: 9px; height: 9px; border-radius: 50%; background: #21c45d; }
-    .content { padding: 28px 34px 34px; }
-    .id-box {
-      margin-bottom: 22px;
-      padding: 18px;
-      border: 1px dashed #111;
+
+    .status-pending { background: var(--warning-soft); color: var(--warning); }
+    .status-approved { background: var(--success-soft); color: var(--success); }
+    .status-rejected { background: var(--danger-soft); color: var(--danger); }
+
+    .empty-state {
+      padding: 34px;
+      color: var(--soft-ink);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .artwork-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(5, 5, 5, 0.72);
+    }
+
+    .modal-card {
+      width: min(980px, 100%);
+      max-height: min(860px, 92vh);
+      overflow: auto;
+      border-radius: 28px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--muted);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 70px);
+      line-height: 0.9;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .preview-frame {
+      min-height: 320px;
+      height: clamp(320px, 52vh, 620px);
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      background: var(--muted);
+    }
+
+    .preview-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    .image-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      box-sizing: border-box;
+      width: 100vw;
+      height: 100dvh;
+      padding: clamp(14px, 3vw, 28px);
+      overflow: hidden;
+      background: rgba(5, 5, 5, 0.94);
+    }
+
+    .image-lightbox[hidden] {
+      display: none !important;
+    }
+
+    .lightbox-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--paper);
+    }
+
+    .lightbox-title {
+      margin: 0;
+      overflow: hidden;
+      color: var(--paper);
+      font-weight: 950;
+      letter-spacing: -0.03em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lightbox-close {
+      border-color: var(--paper);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .lightbox-image-wrap {
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      max-height: calc(100dvh - 112px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      background: #050505;
+    }
+
+    .lightbox-image-wrap img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-fallback {
+      padding: 24px;
+      color: var(--soft-ink);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+
+    .preview-gallery {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .preview-main-image {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
       border-radius: 16px;
-      background: #fbfbfb;
+      background: #fff;
     }
-    .id-box span, .field span, .description span, .footer span {
+
+    .preview-main-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: zoom-in;
+    }
+
+    .preview-thumb-strip {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(64px, 78px);
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .preview-thumb-button {
+      width: 100%;
+      min-height: 58px;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+
+    .preview-thumb-button.active {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px var(--ink) inset;
+    }
+
+    .preview-thumb-button img {
+      width: 100%;
+      height: 58px;
+      object-fit: cover;
       display: block;
-      margin-bottom: 7px;
-      color: #6a6f73;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .16em;
-      text-transform: uppercase;
     }
-    .id-box strong {
-      display: block;
-      overflow-wrap: anywhere;
-      font-size: 18px;
-      line-height: 1.35;
+
+    .preview-file-count {
+      margin: 0;
+      color: var(--soft-ink);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
     }
-    .grid {
+
+    .detail-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
-    .field {
+
+    .detail-card {
       min-width: 0;
-      padding: 16px;
-      border: 1px solid #d7dddd;
-      border-radius: 14px;
-      background: #fff;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
     }
-    .field strong {
+
+    .detail-card span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--soft-ink);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .detail-card strong {
       display: block;
       overflow-wrap: anywhere;
-      font-size: 17px;
       line-height: 1.35;
     }
-    .description {
-      margin-top: 12px;
-      padding: 16px;
-      border: 1px solid #d7dddd;
-      border-radius: 14px;
-      background: #fff;
+
+    .description-card {
+      grid-column: 1 / -1;
     }
-    .description p { margin: 0; line-height: 1.55; }
-    .footer {
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px solid #d7dddd;
-      color: #4f565b;
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .dashboard-note {
+      margin: 0;
+      padding: 16px 24px 22px;
+      color: var(--soft-ink);
+      font-size: 13px;
       line-height: 1.55;
     }
-    @media (max-width: 620px) {
-      body { padding: 14px; }
-      .header, .content { padding: 24px; }
-      .grid { grid-template-columns: 1fr; }
+
+    @media (max-width: 820px) {
+      body.login-screen { padding: 16px; }
+      .admin-shell { padding: 14px; }
+      .admin-header { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .modal-body { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .metric-grid { grid-template-columns: 1fr; }
+      .section-header, .modal-header { align-items: flex-start; flex-direction: column; }
+      a, button { width: 100%; text-align: center; }
+      .detail-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
-<body>
-  <article class="receipt">
-    <header class="header">
-      <p class="eyebrow">Fine Arts Exhibition ANU</p>
-      <h1>Registration<br>Receipt</h1>
-      <div class="status-pill"><span class="dot"></span>${escapeHtml(info.status || 'Awaiting Review')}</div>
-    </header>
-    <main class="content">
-      <section class="id-box">
-        <span>Registration ID</span>
-        <strong>${escapeHtml(info.id)}</strong>
+<body class="login-screen">
+  <main class="login-panel" id="admin-login-panel" aria-labelledby="admin-login-title">
+    <h1 id="admin-login-title">Admin</h1>
+    <p>Enter the admin password to view Fine Arts Exhibition management information.</p>
+    <form class="admin-password-form" id="admin-password-form" action="#">
+      <div>
+        <label for="admin-password">Password</label>
+        <input id="admin-password" name="adminPassword" type="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit">Open Admin</button>
+      <p class="auth-message" id="admin-auth-message" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <div class="admin-shell" id="admin-panel" hidden>
+    <section class="admin-dashboard" aria-labelledby="admin-title">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">Art Exhibition Admin</p>
+          <h1 class="admin-title" id="admin-title">Dashboard</h1>
+          <p class="admin-subtitle">Review registrations, inspect artwork details, and track pending, approved, and rejected registrations.</p>
+        </div>
+        <div class="actions">
+          <a class="secondary" href="student.html">Student Page</a>
+          <button class="secondary-button" type="button" id="admin-logout-button">Lock Admin</button>
+        </div>
+      </header>
+
+      <section class="metric-grid" aria-label="Registration summary">
+        <article class="metric-card">
+          <p class="metric-label">Total</p>
+          <p class="metric-value" id="metric-total">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Pending</p>
+          <p class="metric-value" id="metric-pending">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Approved</p>
+          <p class="metric-value" id="metric-approved">0</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Rejected</p>
+          <p class="metric-value" id="metric-rejected">0</p>
+        </article>
       </section>
-      <section class="grid">${fieldRows}</section>
-      ${description}
-      <footer class="footer">
-        <span>Important</span>
-        Please keep this receipt for your records. Your artwork registration is saved and awaiting review.
-      </footer>
-    </main>
-  </article>
+
+      <section class="dashboard-section" aria-labelledby="recent-registrations-title">
+        <div class="section-header">
+          <div>
+            <h2 id="recent-registrations-title">Recent Registrations</h2>
+            <p>Click any registration row to open the artwork preview and review actions.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="Recent artwork registrations">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Student</th>
+                <th>Artwork</th>
+                <th>Dept</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-registrations-body"></tbody>
+          </table>
+        </div>
+        <p class="dashboard-note" id="dashboard-note">Dashboard data loads from admin-data.json. Approve copies the artwork folder to Approved in MEGA sync storage when the LAN API is reachable.</p>
+      </section>
+    </section>
+  </div>
+
+  <section class="artwork-modal" id="artwork-modal" aria-modal="true" role="dialog" aria-labelledby="modal-artwork-title" hidden>
+    <article class="modal-card">
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">Artwork Preview</p>
+          <h2 id="modal-artwork-title">Artwork</h2>
+        </div>
+        <button class="secondary-button" type="button" id="close-modal-button">Close</button>
+      </header>
+      <div class="modal-body">
+        <div class="preview-frame" id="modal-preview-frame"></div>
+        <div>
+          <div class="detail-grid">
+            <div class="detail-card"><span>Student</span><strong id="modal-student">—</strong></div>
+            <div class="detail-card"><span>Roll Number</span><strong id="modal-roll">—</strong></div>
+            <div class="detail-card"><span>Department</span><strong id="modal-department">—</strong></div>
+            <div class="detail-card"><span>Status</span><strong id="modal-status">—</strong></div>
+            <div class="detail-card"><span>Title</span><strong id="modal-title">—</strong></div>
+            <div class="detail-card"><span>Medium</span><strong id="modal-medium">—</strong></div>
+            <div class="detail-card"><span>Size</span><strong id="modal-size">—</strong></div>
+            <div class="detail-card"><span>Registration ID</span><strong id="modal-id">—</strong></div>
+            <div class="detail-card description-card"><span>Description</span><strong id="modal-description">—</strong></div>
+          </div>
+          <div class="modal-actions">
+            <a id="modal-full-image" href="#" target="_blank" rel="noopener">View Full Image</a>
+            <button class="danger-button" type="button" data-review-action="Rejected">Reject</button>
+            <button class="warning-button" type="button" data-review-action="Pending">Request Changes</button>
+            <button type="button" data-review-action="Approved">Approve</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="image-lightbox" id="image-lightbox" aria-modal="true" role="dialog" aria-labelledby="lightbox-title" hidden>
+    <div class="lightbox-topbar">
+      <p class="lightbox-title" id="lightbox-title">Artwork Image</p>
+      <button class="lightbox-close" type="button" id="close-lightbox-button">Close Full Screen</button>
+    </div>
+    <div class="lightbox-image-wrap" id="lightbox-image-wrap"></div>
+  </section>
+
+  <script>
+    const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
+    function getApiUrl() {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('api')) return params.get('api').replace(/\/$/, '');
+        const stored = localStorage.getItem('EXHIBITION_API_URL');
+        if (stored) return stored.replace(/\/$/, '');
+        if (window.location.protocol.startsWith('http')) {
+          if (window.location.port === '8080' || window.location.port === '8088') {
+            return window.location.origin;
+          }
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8080';
+          }
+        }
+      }
+      return 'http://192.168.1.45:8088';
+    }
+    const API_URL = getApiUrl();
+    const adminLoginPanel = document.getElementById('admin-login-panel');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminPasswordForm = document.getElementById('admin-password-form');
+    const adminPasswordInput = document.getElementById('admin-password');
+    const adminAuthMessage = document.getElementById('admin-auth-message');
+    const adminLogoutButton = document.getElementById('admin-logout-button');
+    const registrationsBody = document.getElementById('recent-registrations-body');
+    const dashboardNote = document.getElementById('dashboard-note');
+    const modal = document.getElementById('artwork-modal');
+    const closeModalButton = document.getElementById('close-modal-button');
+    const modalFullImage = document.getElementById('modal-full-image');
+    const imageLightbox = document.getElementById('image-lightbox');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxImageWrap = document.getElementById('lightbox-image-wrap');
+    const closeLightboxButton = document.getElementById('close-lightbox-button');
+    let dashboardRegistrations = [];
+    let selectedRegistrationId = null;
+
+    async function sha256Hex(value) {
+      const encoded = new TextEncoder().encode(value);
+      const digest = await crypto.subtle.digest('SHA-256', encoded);
+      return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function statusClass(status) {
+      const normalized = String(status || 'Pending').toLowerCase();
+      if (normalized === 'approved') return 'status-approved';
+      if (normalized === 'rejected') return 'status-rejected';
+      return 'status-pending';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function calculateSummary(registrations) {
+      return registrations.reduce((summary, item) => {
+        summary.total += 1;
+        const status = String(item.status || 'Pending').toLowerCase();
+        if (status === 'approved') summary.approved += 1;
+        else if (status === 'rejected') summary.rejected += 1;
+        else summary.pending += 1;
+        return summary;
+      }, { total: 0, pending: 0, approved: 0, rejected: 0 });
+    }
+
+    function updateMetrics(summary) {
+      document.getElementById('metric-total').textContent = String(summary.total || 0);
+      document.getElementById('metric-pending').textContent = String(summary.pending || 0);
+      document.getElementById('metric-approved').textContent = String(summary.approved || 0);
+      document.getElementById('metric-rejected').textContent = String(summary.rejected || 0);
+    }
+
+    function canAutoLoadImage(url) {
+      if (!url) return false;
+      try {
+        const imageUrl = new URL(url, window.location.href);
+        if (imageUrl.protocol === 'data:' || imageUrl.protocol === 'https:') return true;
+        return window.location.hostname.startsWith('192.168.') && imageUrl.hostname.startsWith('192.168.');
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function renderThumbnail(item) {
+      if (item.imageUrl) {
+        return `<div class="thumb"><img src="${escapeHtml(item.imageUrl)}" alt="Artwork thumbnail for ${escapeHtml(item.artwork)}" loading="lazy" onerror="const holder=this.parentElement; this.remove(); if (holder) holder.textContent='IMG';"></div>`;
+      }
+      return '<div class="thumb" aria-label="Artwork file available">IMG</div>';
+    }
+
+    function renderRegistrations() {
+      registrationsBody.innerHTML = '';
+      if (!dashboardRegistrations.length) {
+        registrationsBody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
+        return;
+      }
+      dashboardRegistrations.forEach((item) => {
+        const row = document.createElement('tr');
+        row.tabIndex = 0;
+        row.dataset.registrationId = item.id;
+        row.innerHTML = `
+          <td>${renderThumbnail(item)}</td>
+          <td><p class="student-name">${escapeHtml(item.student)}</p><p class="muted-text">${escapeHtml(item.rollNumber)}</p></td>
+          <td><p class="artwork-name">${escapeHtml(item.artwork)}</p><p class="muted-text">${escapeHtml(item.medium || '—')}</p></td>
+          <td>${escapeHtml(item.department || item.year || 'Fine Arts')}</td>
+          <td><span class="status-pill ${statusClass(item.status)}">${escapeHtml(item.status || 'Pending')}</span></td>`;
+        row.addEventListener('click', () => openArtworkModal(item.id));
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openArtworkModal(item.id);
+          }
+        });
+        registrationsBody.appendChild(row);
+      });
+    }
+
+    function normalizeDashboardStatus(value) {
+      const normalized = String(value || '').trim().toLowerCase();
+      if (normalized === 'approved' || normalized === 'approve') return 'Approved';
+      if (normalized === 'rejected' || normalized === 'reject') return 'Rejected';
+      return 'Pending';
+    }
+
+    function mergeLiveRegistration(staticItem, liveRegistration) {
+      if (!liveRegistration) return staticItem;
+      const student = liveRegistration.student || {};
+      const artwork = liveRegistration.artwork || {};
+      const files = Array.isArray(liveRegistration.files) ? liveRegistration.files : staticItem.files;
+      const firstFile = Array.isArray(files) && files.length ? files[0] : null;
+      return {
+        ...staticItem,
+        student: student.fullName || staticItem.student,
+        rollNumber: student.rollNumber || staticItem.rollNumber,
+        department: artwork.category || staticItem.department,
+        year: student.studentYear || staticItem.year,
+        artwork: artwork.title || staticItem.artwork,
+        medium: artwork.medium || staticItem.medium,
+        size: artwork.dimensions || staticItem.size,
+        description: artwork.description || staticItem.description,
+        status: normalizeDashboardStatus(liveRegistration.reviewStatus || liveRegistration.status || staticItem.status),
+        imageUrl: firstFile?.url || staticItem.imageUrl,
+        fileName: firstFile?.originalName || firstFile?.storedName || staticItem.fileName,
+        files: Array.isArray(files) ? files : (staticItem.files || []),
+        approvedCopy: liveRegistration.approvedCopy || staticItem.approvedCopy,
+        updatedAt: liveRegistration.updatedAt || staticItem.updatedAt,
+      };
+    }
+
+    async function hydrateLiveRegistrationStatuses(registrations) {
+      const hydrated = [];
+      for (const item of registrations) {
+        try {
+          const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(item.id)}`, { cache: 'no-store' });
+          if (response.status === 404) {
+            console.info(`Registration ${item.id} no longer exists on the live API; removing stale admin row.`);
+            continue;
+          }
+          if (!response.ok) throw new Error(`Registration ${item.id} live lookup failed: ${response.status}`);
+          const result = await response.json();
+          hydrated.push(mergeLiveRegistration(item, result.registration));
+        } catch (error) {
+          console.warn('Could not load live registration status', error);
+          hydrated.push(item);
+        }
+      }
+      return hydrated;
+    }
+
+    async function renderDashboard(data) {
+      const staticRegistrations = Array.isArray(data.submissions) ? data.submissions : [];
+      dashboardRegistrations = await hydrateLiveRegistrationStatuses(staticRegistrations);
+      updateMetrics(calculateSummary(dashboardRegistrations));
+      renderRegistrations();
+    }
+
+    async function loadDashboardData() {
+      dashboardNote.textContent = 'Loading registrations...';
+      try {
+        const apiResp = await fetch(`${API_URL}/api/registrations`, { cache: 'no-store' });
+        if (apiResp.ok) {
+          const apiData = await apiResp.json();
+          if (Array.isArray(apiData.registrations)) {
+            const list = apiData.registrations.map(r => ({
+              id: r.id,
+              student: r.student?.fullName || r.studentName || 'Student',
+              rollNumber: r.student?.rollNumber || r.rollNumber || '—',
+              department: r.artwork?.category || r.category || 'Fine Arts',
+              year: r.student?.studentYear || r.studentYear || r.batch || '—',
+              artwork: r.artwork?.title || r.artworkTitle || 'Artwork',
+              medium: r.artwork?.medium || r.medium || '—',
+              size: r.artwork?.dimensions || r.dimensions || '—',
+              description: r.artwork?.description || r.description || '',
+              status: normalizeDashboardStatus(r.reviewStatus || r.status),
+              imageUrl: r.files?.[0]?.url || r.imageUrl || '',
+              fileName: r.files?.[0]?.originalName || r.files?.[0]?.storedName || '',
+              files: r.files || [],
+              approvedCopy: r.approvedCopy,
+              updatedAt: r.updatedAt || r.createdAt
+            }));
+            dashboardRegistrations = list;
+            updateMetrics(calculateSummary(dashboardRegistrations));
+            renderRegistrations();
+            dashboardNote.textContent = `Connected to API (${dashboardRegistrations.length} registrations loaded).`;
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Live API list fetch failed, checking static admin-data.json:', err);
+      }
+
+      try {
+        const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`admin-data.json request failed: ${response.status}`);
+        const data = await response.json();
+        await renderDashboard(data);
+        dashboardNote.textContent = 'Loaded static admin data.';
+      } catch (error) {
+        console.warn('Could not load admin dashboard data', error);
+        dashboardNote.textContent = 'Could not connect to API or load admin-data.json.';
+        await renderDashboard({ summary: { total: 0, pending: 0, approved: 0, rejected: 0 }, submissions: [] });
+      }
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value || '—';
+    }
+
+    function getArtworkFiles(item) {
+      const files = Array.isArray(item.files) ? item.files.filter((file) => file.url) : [];
+      if (files.length) return files;
+      if (item.imageUrl) return [{ originalName: item.fileName || item.artwork || 'Artwork file', url: item.imageUrl, mimeType: 'image/*' }];
+      return [];
+    }
+
+    function renderPreviewGallery(item) {
+      const files = getArtworkFiles(item);
+      const previewFrame = document.getElementById('modal-preview-frame');
+      previewFrame.innerHTML = '';
+      if (!files.length) {
+        previewFrame.innerHTML = '<div class="preview-fallback">No preview image is available for this registration.</div>';
+        modalFullImage.hidden = true;
+        modalFullImage.href = '#';
+        return;
+      }
+
+      let selectedIndex = 0;
+      const gallery = document.createElement('div');
+      gallery.className = 'preview-gallery';
+      const main = document.createElement('div');
+      main.className = 'preview-main-image';
+      const strip = document.createElement('div');
+      strip.className = 'preview-thumb-strip';
+      const count = document.createElement('p');
+      count.className = 'preview-file-count';
+
+      function renderSelected(index) {
+        selectedIndex = index;
+        const file = files[selectedIndex];
+        const fileName = file.originalName || file.storedName || item.artwork || 'Artwork image';
+        main.innerHTML = '';
+        const image = document.createElement('img');
+        image.src = file.url;
+        image.alt = `Artwork preview ${selectedIndex + 1} of ${files.length}: ${fileName}`;
+        image.title = 'Tap to view full screen';
+        image.onerror = () => {
+          main.innerHTML = '<div class="preview-fallback">Preview image could not be loaded. Use View Full Image to open it directly.</div>';
+        };
+        image.addEventListener('click', () => openImageLightbox(file.url, fileName));
+        main.appendChild(image);
+        modalFullImage.hidden = false;
+        modalFullImage.href = file.url;
+        modalFullImage.textContent = files.length > 1 ? `View Full Image ${selectedIndex + 1}` : 'View Full Image';
+        count.textContent = files.length > 1 ? `${selectedIndex + 1} of ${files.length} images` : '1 image';
+        strip.querySelectorAll('.preview-thumb-button').forEach((button, buttonIndex) => {
+          button.classList.toggle('active', buttonIndex === selectedIndex);
+          button.setAttribute('aria-pressed', buttonIndex === selectedIndex ? 'true' : 'false');
+        });
+      }
+
+      files.forEach((file, index) => {
+        const fileName = file.originalName || file.storedName || `Artwork image ${index + 1}`;
+        const button = document.createElement('button');
+        button.className = 'preview-thumb-button';
+        button.type = 'button';
+        button.setAttribute('aria-label', `Show artwork image ${index + 1}: ${fileName}`);
+        const thumb = document.createElement('img');
+        thumb.src = file.url;
+        thumb.alt = '';
+        thumb.loading = 'lazy';
+        thumb.onerror = () => { button.textContent = `IMG ${index + 1}`; };
+        button.appendChild(thumb);
+        button.addEventListener('click', () => renderSelected(index));
+        strip.appendChild(button);
+      });
+
+      gallery.appendChild(main);
+      if (files.length > 1) gallery.appendChild(strip);
+      gallery.appendChild(count);
+      previewFrame.appendChild(gallery);
+      renderSelected(0);
+    }
+
+    function openImageLightbox(url, title = 'Artwork Image') {
+      if (!url) return;
+      lightboxTitle.textContent = title || 'Artwork Image';
+      lightboxImageWrap.innerHTML = '';
+      const image = document.createElement('img');
+      image.src = url;
+      image.alt = title ? `Full screen artwork: ${title}` : 'Full screen artwork image';
+      image.onerror = () => {
+        lightboxImageWrap.innerHTML = '<div class="preview-fallback">Full-screen image could not be loaded. Use View Full Image to open it directly.</div>';
+      };
+      lightboxImageWrap.appendChild(image);
+      imageLightbox.hidden = false;
+      closeLightboxButton.focus();
+    }
+
+    function closeImageLightbox() {
+      imageLightbox.hidden = true;
+      lightboxImageWrap.innerHTML = '';
+    }
+
+    function openArtworkModal(id) {
+      const item = dashboardRegistrations.find((registration) => registration.id === id);
+      if (!item) return;
+      selectedRegistrationId = id;
+      setText('modal-artwork-title', item.artwork || 'Artwork');
+      setText('modal-student', item.student);
+      setText('modal-roll', item.rollNumber);
+      setText('modal-department', item.department || item.year || 'Fine Arts');
+      setText('modal-status', item.status || 'Pending');
+      setText('modal-title', item.artwork);
+      setText('modal-medium', item.medium);
+      setText('modal-size', item.size);
+      setText('modal-id', item.id);
+      setText('modal-description', item.description);
+      renderPreviewGallery(item);
+      modal.hidden = false;
+      closeModalButton.focus();
+    }
+
+    function closeArtworkModal() {
+      modal.hidden = true;
+      selectedRegistrationId = null;
+    }
+
+    async function applyReviewStatus(status) {
+      if (!selectedRegistrationId) return;
+      const item = dashboardRegistrations.find((registration) => registration.id === selectedRegistrationId);
+      if (!item) return;
+      dashboardNote.textContent = status === 'Approved'
+        ? 'Approving registration and copying artwork folder to Approved in MEGA sync storage...'
+        : 'Saving review status...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(selectedRegistrationId)}/review`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || `Review failed: ${response.status}`);
+
+        item.status = result.status || status;
+        item.approvedCopy = result.approvedCopy || item.approvedCopy;
+        updateMetrics(calculateSummary(dashboardRegistrations));
+        renderRegistrations();
+        setText('modal-status', item.status);
+        dashboardNote.textContent = item.status === 'Approved' && item.approvedCopy?.megaSyncPath
+          ? `Approved copy saved to ${item.approvedCopy.megaSyncPath}. MEGA will sync it automatically.`
+          : 'Review status saved on the backend.';
+      } catch (error) {
+        console.error(error);
+        dashboardNote.textContent = `Could not save review status: ${error.message}`;
+      }
+    }
+
+    function showAdminPanel() {
+      document.body.classList.remove('login-screen');
+      adminLoginPanel.hidden = true;
+      adminPanel.hidden = false;
+      loadDashboardData();
+    }
+
+    function showLoginPanel(message = '') {
+      document.body.classList.add('login-screen');
+      adminPanel.hidden = true;
+      adminLoginPanel.hidden = false;
+      adminAuthMessage.textContent = message;
+      adminPasswordInput.value = '';
+      adminPasswordInput.focus();
+    }
+
+    adminPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      adminAuthMessage.textContent = '';
+      const passwordHash = await sha256Hex(adminPasswordInput.value);
+      if (passwordHash !== ADMIN_PASSWORD_HASH) {
+        showLoginPanel('Incorrect password.');
+        return;
+      }
+      showAdminPanel();
+    });
+
+    adminLogoutButton.addEventListener('click', () => {
+      showLoginPanel();
+    });
+
+    closeModalButton.addEventListener('click', closeArtworkModal);
+    closeLightboxButton.addEventListener('click', closeImageLightbox);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeArtworkModal();
+    });
+    imageLightbox.addEventListener('click', (event) => {
+      if (event.target === imageLightbox) closeImageLightbox();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !imageLightbox.hidden) {
+        closeImageLightbox();
+        return;
+      }
+      if (event.key === 'Escape' && !modal.hidden) closeArtworkModal();
+    });
+    document.querySelectorAll('[data-review-action]').forEach((button) => {
+      button.addEventListener('click', () => applyReviewStatus(button.dataset.reviewAction));
+    });
+
+    // Always require the password every time admin.html is opened.
+    showLoginPanel();
+  </script>
 </body>
-</html>`;
-              }
-
-              function saveRegistrationInfo() {
-                if (!latestRegistrationInfo) return;
-                const receiptHtml = buildRegistrationReceiptHtml(latestRegistrationInfo);
-                const blob = new Blob([receiptHtml], { type: 'text/html;charset=utf-8' });
-                const downloadUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = `${safeFilePart(latestRegistrationInfo.id)}-${safeFilePart(latestRegistrationInfo.artworkTitle)}-receipt.html`;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(downloadUrl);
-              }
-
-              saveRegistrationInfoButton.addEventListener('click', saveRegistrationInfo);
-
-              function setInputValue(name, value) {
-                const input = form.querySelector(`[name="${name}"]`);
-                if (input) input.value = value || '';
-              }
-
-              function setCategoryValue(category) {
-                const normalizedCategory = category || '';
-                const matchingCategory = form.querySelector(`input[name="category"][value="${CSS.escape(normalizedCategory)}"]`);
-                const otherRadio = document.getElementById('category-other');
-                if (matchingCategory) {
-                  matchingCategory.checked = true;
-                } else {
-                  otherRadio.checked = true;
-                  otherCategoryInput.value = normalizedCategory;
-                }
-                updateOtherCategoryField();
-              }
-
-              function setEditMode(registration) {
-                form.hidden = false;
-                editingRegistrationId = registration.id;
-                editRegistrationIdInput.value = registration.id;
-                editModeBadge.hidden = false;
-                cancelEditButton.hidden = false;
-                artworkFileInput.required = false;
-                form.querySelector('.register-button').textContent = 'Update Registration';
-                editRegistrationStatus.textContent = `Editing registration ${registration.id}. Upload new files only if you want to replace the existing artwork files.`;
-                setInputValue('fullName', registration.student?.fullName);
-                setInputValue('studentYear', registration.student?.studentYear);
-                setInputValue('artworkTitle', registration.artwork?.title);
-                setCategoryValue(registration.artwork?.category);
-                setInputValue('medium', registration.artwork?.medium);
-                setInputValue('dimensions', registration.artwork?.dimensions);
-                setInputValue('description', registration.artwork?.description);
-                selectedArtworkFiles = [];
-                existingFilesToRemove.clear();
-                artworkFileInput.value = '';
-                clearArtworkPreview();
-                renderCurrentFilesPreview(registration.files || []);
-                note.textContent = 'Edit mode: current artwork files will stay unless you select new files.';
-                note.style.color = '';
-              }
-
-              function clearEditMode() {
-                editingRegistrationId = null;
-                editRegistrationIdInput.value = '';
-                editModeBadge.hidden = true;
-                cancelEditButton.hidden = true;
-                document.getElementById('edit-registration').hidden = true;
-                form.hidden = isEditPage;
-                artworkFileInput.required = true;
-                form.querySelector('.register-button').textContent = 'Register Artwork';
-                editRegistrationStatus.textContent = '';
-                form.reset();
-                selectedArtworkFiles = [];
-                clearArtworkPreview();
-                clearCurrentFilesPreview();
-                updateOtherCategoryField();
-                note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
-                note.style.color = '';
-              }
-
-              async function loadExistingRegistration() {
-                const id = editRegistrationIdInput.value.trim();
-                if (!id) {
-                  editRegistrationStatus.textContent = 'Enter a Registration ID first.';
-                  return;
-                }
-                loadRegistrationButton.disabled = true;
-                editRegistrationStatus.textContent = 'Loading registration...';
-                try {
-                  const resp = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(id)}`, { cache: 'no-store' });
-                  const result = await resp.json().catch(() => ({}));
-                  if (!resp.ok) throw new Error(result.error || 'Registration not found');
-                  setEditMode(result.registration);
-                } catch (error) {
-                  console.error('Registration lookup error:', error);
-                  editRegistrationStatus.textContent = `Error: ${error.message}`;
-                } finally {
-                  loadRegistrationButton.disabled = false;
-                }
-              }
-
-              loadRegistrationButton.addEventListener('click', loadExistingRegistration);
-              cancelEditButton.addEventListener('click', clearEditMode);
-
-              form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const requiredFields = ['fullName', 'studentYear', 'artworkTitle', 'category', 'medium'];
-                for (const field of requiredFields) {
-                  const input = form.querySelector(`[name="${field}"]`);
-                  if (input && !input.value.trim()) {
-                    alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
-                    input.focus();
-                    return;
-                  }
-                }
-                if (!editingRegistrationId && selectedArtworkFiles.length === 0) {
-                  alert('Please select at least one artwork file');
-                  return;
-                }
-                if (editingRegistrationId && selectedArtworkFiles.length === 0 && currentRegistrationFiles.length > 0) {
-                  const remainingFiles = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file)));
-                  if (!remainingFiles.length) {
-                    alert('At least one artwork file must remain. Upload a replacement before removing all existing files.');
-                    return;
-                  }
-                }
-                const submitBtn = form.querySelector('.register-button');
-                latestRegistrationInfo = null;
-                submissionSuccess.hidden = true;
-                submitBtn.disabled = true;
-                submitBtn.textContent = editingRegistrationId ? 'Updating...' : 'Registering...';
-                note.textContent = editingRegistrationId ? 'Updating registration in TrueNAS...' : 'Uploading registration to TrueNAS...';
-                note.style.color = '';
-                try {
-                  submissionSuccess.hidden = true;
-                  const formData = new FormData(form);
-                  formData.delete('artworkFiles[]');
-                  selectedArtworkFiles.forEach((file) => formData.append('artworkFiles', file));
-                  if (editingRegistrationId && selectedArtworkFiles.length === 0 && existingFilesToRemove.size) {
-                    formData.set('removeExistingFiles', JSON.stringify(Array.from(existingFilesToRemove)));
-                  }
-                  const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
-                  const requestUrl = editingRegistrationId
-                    ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
-                    : `${API_URL}/api/registrations`;
-                  const requestMethod = editingRegistrationId ? 'PUT' : 'POST';
-                  const resp = await fetch(requestUrl, { method: requestMethod, body: formData });
-                  const result = await resp.json().catch(() => ({}));
-                  if (!resp.ok) throw new Error(result.error || (editingRegistrationId ? 'Registration update failed' : 'Registration failed'));
-                  const savedRegistration = result.registration || {};
-                  latestRegistrationInfo = {
-                    id: result.id || savedRegistration.id || 'Registered',
-                    studentName: savedRegistration.student?.fullName || formData.get('fullName') || '',
-                    studentYear: savedRegistration.student?.studentYear || formData.get('studentYear') || '',
-                    artworkTitle: savedRegistration.artwork?.title || submittedArtworkTitle,
-                    category: savedRegistration.artwork?.category || formData.get('category') || '',
-                    medium: savedRegistration.artwork?.medium || formData.get('medium') || '',
-                    description: savedRegistration.artwork?.description || formData.get('description') || '',
-                    status: 'Awaiting Review',
-                    savedAt: new Date().toLocaleString()
-                  };
-                  successTitleText.textContent = editingRegistrationId ? 'Registration Updated' : 'Registration Successful';
-                  successSubmissionId.textContent = latestRegistrationInfo.id;
-                  successArtworkTitle.textContent = `"${latestRegistrationInfo.artworkTitle}"`;
-                  successStatusText.textContent = latestRegistrationInfo.status;
-                  submissionSuccess.hidden = false;
-                  note.textContent = editingRegistrationId ? 'Your registration was updated and is awaiting review.' : 'Your artwork was uploaded and is awaiting review.';
-                  note.style.color = 'green';
-                  const wasEditing = Boolean(editingRegistrationId);
-                  form.reset();
-                  selectedArtworkFiles = [];
-                  clearArtworkPreview();
-                  clearCurrentFilesPreview();
-                  updateOtherCategoryField();
-                  if (wasEditing) {
-                    editingRegistrationId = null;
-                    editModeBadge.hidden = true;
-                    cancelEditButton.hidden = true;
-                    artworkFileInput.required = true;
-                    submitBtn.textContent = 'Register Artwork';
-                    editRegistrationStatus.textContent = 'Registration updated successfully.';
-                  }
-                  submissionSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } catch (error) {
-                  console.error('Registration error:', error);
-                  note.textContent = `Error: ${error.message}`;
-                  note.style.color = 'red';
-                } finally {
-                  submitBtn.disabled = false;
-                  submitBtn.textContent = 'Register Artwork';
-                }
-              });
-
-              updateOtherCategoryField();
-
-              if (isEditPage) {
-                const editRegistrationPanel = document.getElementById('edit-registration');
-                editRegistrationPanel.hidden = false;
-                form.hidden = true;
-                note.textContent = 'Enter your Registration ID above to load your saved details.';
-                setTimeout(() => {
-                  editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  editRegistrationIdInput.focus();
-                }, 120);
-              }
-            </script>
-          </body>
-          </html>
+</html>
