@@ -835,14 +835,7 @@
                 <input id="full-name" name="fullName" type="text" autocomplete="name" required />
               </div>
               <div class="field">
-                <div class="form-group">
-                <label for="artist-id">Artist ID <span class="required">*</span></label>
-                <input id="artist-id" name="artistId" type="text" autocomplete="off" required placeholder="Loading..." />
-                <button type="button" class="btn btn-secondary btn-sm" id="regenerate-artist-id" style="margin-top:8px;">Regenerate ID</button>
-                <small class="hint">Your unique Artist ID. Click "Regenerate ID" to create a new one.</small>
-                <small class="hint">Enter a unique identifier for your submissions. Use format ART-XXXX-XXXX.</small>
-              </div>
-              <label for="student-year">Batch <span class="required">*</span></label>
+                <label for="student-year">Batch <span class="required">*</span></label>
                 <select id="student-year" name="studentYear" required>
                   <option value="" selected disabled>Select batch</option>
                   <option value="2020 Batch">2020 Batch</option>
@@ -1474,14 +1467,7 @@
                 } catch {
                   return [];
                 }
-    // Load existing Artist ID
-    try {
-      const savedId = localStorage.getItem('savedArtistId');
-      if (savedId) {
-        const input = document.getElementById('artist-id');
-        if (input) input.value = savedId;
-      }
-    } catch {}
+     catch {}
 
               }
 
@@ -1710,11 +1696,7 @@
               }
             
     
-    document.getElementById('regenerate-artist-id').addEventListener('click', () => {
-      const id = 'ART-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      document.getElementById('artist-id').value = id;
-      localStorage.setItem('savedArtistId', id);
-    });
+    
 </script>
           </body>
           </html>
