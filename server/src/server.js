@@ -553,6 +553,10 @@ app.post('/api/registrations', registrationUpload, async (req, res) => {
     validateArtistFields(req.body);
 
     // With .fields(): req.files is { profilePicture: [...], artworkFiles: [...] }
+    console.log('req.files keys:', Object.keys(req.files || {}));
+    for (const key of Object.keys(req.files || {})) {
+      console.log(`  ${key}: ${Array.isArray(req.files[key]) ? req.files[key].length : 'not array'} files`);
+    }
     const artworkUploads = Array.isArray(req.files?.artworkFiles) ? req.files.artworkFiles : [];
     const profileUploads = Array.isArray(req.files?.profilePicture) ? req.files.profilePicture : [];
 
