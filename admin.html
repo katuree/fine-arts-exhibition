@@ -945,6 +945,7 @@
             apiData.registrations.forEach(r => {
               allRegistrationsMap.set(r.id, {
                 id: r.id,
+                artistId: r.artistId || '',
                 student: r.student?.fullName || r.studentName || 'Student',
                 rollNumber: r.student?.rollNumber || r.rollNumber || '—',
                 department: r.artwork?.category || r.category || 'Fine Arts',
@@ -1080,7 +1081,7 @@
       selectedRegistrationId = id;
       setText('modal-artwork-title', item.artwork || 'Artwork');
       setText('modal-artist', item.student);
-      setText('modal-roll', item.rollNumber);
+      setText('modal-roll', item.artistId || '—');
       setText('modal-department', item.department || item.year || 'Fine Arts');
       setText('modal-status', item.status || 'Pending');
       setText('modal-title', item.artwork);
