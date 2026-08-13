@@ -153,8 +153,8 @@ app.get('/api/registrations', async (req, res) => {
     let registrations = [];
     if (USE_MEGA) {
       await connectMega();
-      const pending = await listMegaRegistrationsFromRoot(megaRoots.registeredRoot, 'Pending');
-      const approved = await listMegaRegistrationsFromRoot(megaRoots.approvedRoot, 'Approved');
+      const pending = await listMegaRegistrationsFromRoot(megaRoots?.registeredRoot, 'Pending');
+      const approved = await listMegaRegistrationsFromRoot(megaRoots?.approvedRoot, 'Approved');
       registrations = [...pending, ...approved];
     } else {
       const pending = await listLocalRegistrationsFromRoot('Registered', 'Pending');
@@ -186,8 +186,8 @@ app.get('/api/stats', async (req, res) => {
 
     if (USE_MEGA) {
       await connectMega();
-      const pending = await listMegaRegistrationsFromRoot(megaRoots.registeredRoot, 'Pending');
-      const approved = await listMegaRegistrationsFromRoot(megaRoots.approvedRoot, 'Approved');
+      const pending = await listMegaRegistrationsFromRoot(megaRoots?.registeredRoot, 'Pending');
+      const approved = await listMegaRegistrationsFromRoot(megaRoots?.approvedRoot, 'Approved');
       pendingCount = pending.length;
       approvedCount = approved.length;
     } else {
@@ -292,7 +292,7 @@ app.post('/api/registrations', registrationUpload, async (req, res) => {
       };
       await writeMegaJsonFile(artist.folder, 'artist-info.json', artistInfo);
 
-      const batchFolder = await ensureMegaFolder(megaRoots.registeredRoot, batch);
+      const batchFolder = await ensureMegaFolder(megaRoots?.registeredRoot, batch);
       const artistArtworkRoot = await ensureMegaFolder(batchFolder, artistInfo.artistId);
       const registrationFolder = await ensureMegaFolder(artistArtworkRoot, registrationId);
 
@@ -607,7 +607,7 @@ app.patch('/api/registrations/:id/review', async (req, res) => {
     const batch = normalizeBatch(registration.student?.studentYear);
 
     if (USE_MEGA) {
-      const desiredRoot = requestedStatus === 'Approved' ? megaRoots.approvedRoot : megaRoots.registeredRoot;
+      const desiredRoot = requestedStatus === 'Approved' ? megaRoots?.approvedRoot : megaRoots?.registeredRoot;
       const batchFolder = await ensureMegaFolder(desiredRoot, batch);
       const artistFolder = await ensureMegaFolder(batchFolder, registration.artistId);
 
@@ -688,8 +688,8 @@ app.get('/api/artists/:artistId', async (req, res) => {
     let allRegs = [];
     if (USE_MEGA) {
       allRegs = [
-        ...(await listMegaRegistrationsFromRoot(megaRoots.registeredRoot, 'Pending')),
-        ...(await listMegaRegistrationsFromRoot(megaRoots.approvedRoot, 'Approved')),
+        ...(await listMegaRegistrationsFromRoot(megaRoots?.registeredRoot, 'Pending')),
+        ...(await listMegaRegistrationsFromRoot(megaRoots?.approvedRoot, 'Approved')),
       ];
     } else {
       allRegs = [
@@ -970,7 +970,7 @@ async function findRegistration(registrationId) {
   if (!id) return null;
 
   if (USE_MEGA) {
-    for (const root of [megaRoots.registeredRoot, megaRoots.approvedRoot]) {
+    for (const root of [megaRoots?.registeredRoot, megaRoots?.approvedRoot]) {
       for (const batchFolder of root.children || []) {
         if (!batchFolder.directory) continue;
         for (const artistFolder of batchFolder.children || []) {
