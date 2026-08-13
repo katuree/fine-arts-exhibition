@@ -97,7 +97,10 @@ const registrationUpload = multer({
     }
     cb(null, true);
   },
-}).array('artworkFiles[]', MAX_ARTWORK_FILES);
+}).fields([
+  { name: 'profilePicture', maxCount: MAX_PROFILE_FILES },
+  { name: 'artworkFiles[]', maxCount: MAX_ARTWORK_FILES },
+]);
 
 // ── Static files for frontend (if served from /docs) ──
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
@@ -549,8 +552,9 @@ app.post('/api/registrations', registrationUpload, async (req, res) => {
   try {
     validateArtistFields(req.body);
 
-    const artworkUploads = [...(req.files?.artworkFiles || []), ...(req.files?.['artworkFiles[]'] || [])];
-    const profileUploads = req.files?.profilePicture || [];
+    // With .fields(): req.files is { profilePicture: [...], artworkFiles: [...] }
+    const artworkUploads = Array.isArray(req.files?.artworkFiles) ? req.files.artworkFiles : [];
+    const profileUploads = Array.isArray(req.files?.profilePicture) ? req.files.profilePicture : [];
 
     if (!artworkUploads.length) {
       return res.status(400).json({ error: 'Please upload at least one artwork file.' });
