@@ -556,17 +556,12 @@
         let total = 0;
         try {
           const stats = await fetchLanStats();
-          if (stats?.totalArtworksRegistered !== undefined) total = Number(stats.totalArtworksRegistered);
+          total = Number(stats?.totalArtworksRegistered || 0);
         } catch {
           try {
             const stats = await fetchStatsJson();
-            if (stats?.totalArtworksRegistered !== undefined) total = Number(stats.totalArtworksRegistered);
+            total = Number(stats?.totalArtworksRegistered || 0);
           } catch {}
-        }
-
-        // Use API value only — localStorage was for offline fallback which is no longer needed
-        if (stats?.totalArtworksRegistered !== undefined) {
-          total = Number(stats.totalArtworksRegistered);
         }
 
         counter.textContent = String(total);
