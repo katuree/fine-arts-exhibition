@@ -394,12 +394,14 @@ app.get('/api/health', async (req, res) => {
     if (USE_MEGA) {
       try {
         await connectMega();
-        if (megaRoots) {
+        if (megaRoots && megaRoots.exhibitionRoot) {
+          const regRoot = megaRoots.registeredRoot || {};
+          const appRoot = megaRoots.approvedRoot || {};
           megaHealth = {
             status: 'connected',
             folder: MEGA_ROOT_FOLDER,
-            registeredCount: (megaRoots.registeredRoot.children || []).length,
-            approvedCount: (megaRoots.approvedRoot.children || []).length,
+            registeredCount: (regRoot.children || []).length,
+            approvedCount: (appRoot.children || []).length,
           };
         }
       } catch (err) {
