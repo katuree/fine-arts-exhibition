@@ -195,12 +195,15 @@ app.get('/api/stats', async (req, res) => {
     let pendingCount = 0;
     let approvedCount = 0;
 
-    if (USE_MEGA) {
-      await connectMega();
-      const pending = await listMegaRegistrationsFromRoot(megaRoots?.registeredRoot, 'Pending');
-      const approved = await listMegaRegistrationsFromRoot(megaRoots?.approvedRoot, 'Approved');
-      pendingCount = pending.length;
-      approvedCount = approved.length;
+    if (USE_MEGA && megaRoots && megaRoots.registeredRoot) {
+      try {
+        const pending = await listMegaRegistrationsFromRoot(megaRoots.registeredRoot, 'Pending');
+        const approved = await listMegaRegistrationsFromRoot(megaRoots.approvedRoot, 'Approved');
+        pendingCount = pending.length;
+        approvedCount = approved.length;
+      } catch (err) {
+        console.error('Stats MEGA error:', err.message);
+      }
     } else {
       const pending = await listLocalRegistrationsFromRoot('Registered', 'Pending');
       const approved = await listLocalRegistrationsFromRoot('Approved', 'Approved');
