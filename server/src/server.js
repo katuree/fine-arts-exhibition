@@ -1172,3 +1172,16 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Fine Arts Exhibition API running on port ${PORT}`);
   console.log(`Storage Mode: ${USE_MEGA ? 'MEGA' : 'Local Disk (' + LOCAL_STORAGE_DIR + ')'}`);
 });
+
+// Debug: list MEGA root children
+app.get('/api/mega-debug', async (req, res) => {
+  if (!mega) return res.json({ error: 'Not connected' });
+  const root = mega.root;
+  return res.json({
+    rootName: root?.name,
+    rootDirectory: root?.directory,
+    rootHasChildren: Array.isArray(root?.children),
+    childrenCount: Array.isArray(root?.children) ? root.children.length : 0,
+    children: Array.isArray(root?.children) ? root.children.map(c => ({ name: c.name, directory: c.directory })) : null,
+  });
+});
