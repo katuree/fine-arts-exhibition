@@ -44,8 +44,8 @@ const BATCH_FOLDERS = [
 const MEGA_EMAIL = String(process.env.MEGA_EMAIL || '').trim();
 const MEGA_PASSWORD = String(process.env.MEGA_PASSWORD || '');
 const MEGA_ROOT_FOLDER = String(process.env.MEGA_ROOT_FOLDER || 'Fine Arts Exhibition').trim();
-const USE_MEGA = false;  // Temporarily disabled — MEGA root access issue
-const USE_LOCAL_DISK = USE_MEGA ? false : true;
+const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
+
 
 // ── Ensure local storage folders exist (non-blocking — if it fails, it will fail on first request)
 (async () => {
@@ -151,11 +151,19 @@ async function connectMega() {
 
 async function ensureMegaFolder(parent, name) {
   if (!parent) return null;
+  // If parent is the mega Storage instance, create folder at root
+  if (typeof mega.createFolder === 'function' && parent === mega) {
+    const folders = (mega.root?.children || []).filter(c => c.name === name);
+    if (folders.length) return folders[0];
+    return await mega.createFolder(name);
+  }
   const children = (parent.children || []).filter(c => c.name === name && c.directory);
   if (children.length) return children[0];
-  if (typeof parent.createFolder !== 'function') return null;
-  const newFolder = await parent.createFolder(name);
-  return newFolder;
+  if (typeof parent.createFolder === 'function') {
+    const newFolder = await parent.createFolder(name);
+    return newFolder;
+  }
+  return null;
 }
 
 async function findChild(root, childName, exactMatch) {
