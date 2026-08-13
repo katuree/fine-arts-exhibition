@@ -10,6 +10,8 @@ import * as fsp from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import os from 'os';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +35,7 @@ const MAX_PROFILE_FILES = parseInt(
 
 // ── Local storage dirs ──
 const LOCAL_STORAGE_DIR = process.env.LOCAL_STORAGE_DIR || path.join(__dirname, '..', 'data', 'uploads');
-const TEMP_DIR = process.env.TEMP_DIR || require('os').tmpdir();
+const TEMP_DIR = process.env.TEMP_DIR || os.tmpdir();
 const BATCH_FOLDERS = [
   '2020 Batch', '2021 Batch', '2022 Batch', '2023 Batch', '2024 Batch', '2025 Batch',
 ];
@@ -177,7 +179,7 @@ async function uploadTempFileToMega(folder, file, targetName) {
   }
   const uploaded = await folder.createFile(targetName);
   const stream = uploaded.write();
-  const source = require('fs').createReadStream(file.path);
+  const source = fs.createReadStream(file.path);
   await new Promise((resolve, reject) => {
     source.pipe(stream).on('finish', resolve).on('error', reject);
   });
