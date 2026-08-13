@@ -44,7 +44,7 @@ const BATCH_FOLDERS = [
 const MEGA_EMAIL = String(process.env.MEGA_EMAIL || '').trim();
 const MEGA_PASSWORD = String(process.env.MEGA_PASSWORD || '');
 const MEGA_ROOT_FOLDER = String(process.env.MEGA_ROOT_FOLDER || 'Fine Arts Exhibition').trim();
-const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
+const USE_MEGA = false;
 
 
 // ── Ensure local storage folders exist (non-blocking — if it fails, it will fail on first request)
