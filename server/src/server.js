@@ -40,13 +40,19 @@ const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
 const TEMP_DIR = path.join(os.tmpdir(), 'fine-arts-exhibition-incoming');
 await fsp.mkdir(TEMP_DIR, { recursive: true });
 
-// Ensure local storage folders exist
-await fsp.mkdir(path.join(LOCAL_STORAGE_DIR, 'Artists'), { recursive: true });
-for (const rootName of ['Registered', 'Approved']) {
-  for (const batch of BATCH_FOLDERS) {
-    await fsp.mkdir(path.join(LOCAL_STORAGE_DIR, rootName, batch), { recursive: true });
+// Ensure local storage folders exist (non-blocking — if it fails, it will fail on first request)
+(async () => {
+  try {
+    await fsp.mkdir(path.join(LOCAL_STORAGE_DIR, 'Artists'), { recursive: true });
+    for (const rootName of ['Registered', 'Approved']) {
+      for (const batch of BATCH_FOLDERS) {
+        await fsp.mkdir(path.join(LOCAL_STORAGE_DIR, rootName, batch), { recursive: true });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to create storage dirs (will retry on first request):', err.message);
   }
-}
+})();
 
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, TEMP_DIR),

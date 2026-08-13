@@ -553,13 +553,22 @@
       if (!counter) return;
 
       try {
-        let stats = null;
+        let total = 0;
         try {
-          stats = await fetchLanStats();
-        } catch (lanError) {
-          stats = await fetchStatsJson();
+          const stats = await fetchLanStats();
+          if (stats?.totalArtworksRegistered !== undefined) total = Number(stats.totalArtworksRegistered);
+        } catch {
+          try {
+            const stats = await fetchStatsJson();
+            if (stats?.totalArtworksRegistered !== undefined) total = Number(stats.totalArtworksRegistered);
+          } catch {}
         }
-        const total = Number(stats?.totalArtworksRegistered || 0);
+
+        try {
+          const localList = JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
+          if (localList.length > total) total = localList.length;
+        } catch {}
+
         counter.textContent = String(total);
       } catch (error) {
         console.warn('Could not update artwork count', error);

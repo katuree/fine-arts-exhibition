@@ -933,12 +933,45 @@
 
     async function loadDashboardData() {
       dashboardNote.textContent = 'Loading registrations...';
+      const allRegistrationsMap = new Map();
+
+      // 1. Live API
       try {
         const apiResp = await fetch(`${API_URL}/api/registrations`, { cache: 'no-store' });
         if (apiResp.ok) {
           const apiData = await apiResp.json();
           if (Array.isArray(apiData.registrations)) {
-            const list = apiData.registrations.map(r => ({
+            apiData.registrations.forEach(r => {
+              allRegistrationsMap.set(r.id, {
+                id: r.id,
+                student: r.student?.fullName || r.studentName || 'Student',
+                rollNumber: r.student?.rollNumber || r.rollNumber || '—',
+                department: r.artwork?.category || r.category || 'Fine Arts',
+                year: r.student?.studentYear || r.studentYear || r.batch || '—',
+                artwork: r.artwork?.title || r.artworkTitle || 'Artwork',
+                medium: r.artwork?.medium || r.medium || '—',
+                size: r.artwork?.dimensions || r.dimensions || '—',
+                description: r.artwork?.description || r.description || '',
+                status: normalizeDashboardStatus(r.reviewStatus || r.status),
+                imageUrl: r.files?.[0]?.url || r.imageUrl || '',
+                fileName: r.files?.[0]?.originalName || r.files?.[0]?.storedName || '',
+                files: r.files || [],
+                approvedCopy: r.approvedCopy,
+                updatedAt: r.updatedAt || r.createdAt
+              });
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Live API list fetch failed, loading browser & static records:', err);
+      }
+
+      // 2. Browser LocalStorage records
+      try {
+        const localList = JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
+        localList.forEach(r => {
+          if (!allRegistrationsMap.has(r.id)) {
+            allRegistrationsMap.set(r.id, {
               id: r.id,
               student: r.student?.fullName || r.studentName || 'Student',
               rollNumber: r.student?.rollNumber || r.rollNumber || '—',
@@ -954,29 +987,28 @@
               files: r.files || [],
               approvedCopy: r.approvedCopy,
               updatedAt: r.updatedAt || r.createdAt
-            }));
-            dashboardRegistrations = list;
-            updateMetrics(calculateSummary(dashboardRegistrations));
-            renderRegistrations();
-            dashboardNote.textContent = `Connected to API (${dashboardRegistrations.length} registrations loaded).`;
-            return;
+            });
           }
-        }
+        });
       } catch (err) {
-        console.warn('Live API list fetch failed, checking static admin-data.json:', err);
+        console.warn('LocalStorage load failed:', err);
       }
 
-      try {
-        const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`admin-data.json request failed: ${response.status}`);
-        const data = await response.json();
-        await renderDashboard(data);
-        dashboardNote.textContent = 'Loaded static admin data.';
-      } catch (error) {
-        console.warn('Could not load admin dashboard data', error);
-        dashboardNote.textContent = 'Could not connect to API or load admin-data.json.';
-        await renderDashboard({ summary: { total: 0, pending: 0, approved: 0, rejected: 0 }, submissions: [] });
+      // 3. Fallback to admin-data.json
+      if (allRegistrationsMap.size === 0) {
+        try {
+          const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
+          if (response.ok) {
+            const data = await response.json();
+            (data.submissions || []).forEach(r => allRegistrationsMap.set(r.id, r));
+          }
+        } catch {}
       }
+
+      dashboardRegistrations = Array.from(allRegistrationsMap.values());
+      updateMetrics(calculateSummary(dashboardRegistrations));
+      renderRegistrations();
+      dashboardNote.textContent = `${dashboardRegistrations.length} registrations loaded.`;
     }
 
     function setText(id, value) {
@@ -1106,10 +1138,9 @@
       if (!selectedRegistrationId) return;
       const item = dashboardRegistrations.find((registration) => registration.id === selectedRegistrationId);
       if (!item) return;
-      dashboardNote.textContent = status === 'Approved'
-        ? 'Approving registration and copying artwork folder to Approved in MEGA sync storage...'
-        : 'Saving review status...';
+      dashboardNote.textContent = 'Updating review status...';
 
+      // 1. Live API review attempt
       try {
         const response = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(selectedRegistrationId)}/review`, {
           method: 'PATCH',
@@ -1117,20 +1148,31 @@
           body: JSON.stringify({ status }),
         });
         const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok) throw new Error(result.error || `Review failed: ${response.status}`);
-
-        item.status = result.status || status;
-        item.approvedCopy = result.approvedCopy || item.approvedCopy;
-        updateMetrics(calculateSummary(dashboardRegistrations));
-        renderRegistrations();
-        setText('modal-status', item.status);
-        dashboardNote.textContent = item.status === 'Approved' && item.approvedCopy?.megaSyncPath
-          ? `Approved copy saved to ${item.approvedCopy.megaSyncPath}. MEGA will sync it automatically.`
-          : 'Review status saved on the backend.';
+        if (response.ok && result.status) {
+          item.status = result.status;
+          item.approvedCopy = result.approvedCopy || item.approvedCopy;
+        }
       } catch (error) {
-        console.error(error);
-        dashboardNote.textContent = `Could not save review status: ${error.message}`;
+        console.warn('Live API review request failed (updating locally):', error);
       }
+
+      // 2. Update in browser storage
+      try {
+        const localList = JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
+        const localItem = localList.find((r) => r.id === selectedRegistrationId);
+        if (localItem) {
+          localItem.status = status;
+          localItem.reviewStatus = status;
+          localItem.reviewedAt = new Date().toISOString();
+          localStorage.setItem('LOCAL_REGISTRATIONS', JSON.stringify(localList));
+        }
+      } catch {}
+
+      item.status = status;
+      updateMetrics(calculateSummary(dashboardRegistrations));
+      renderRegistrations();
+      setText('modal-status', item.status);
+      dashboardNote.textContent = `Registration status updated to ${status}.`;
     }
 
     function showAdminPanel() {

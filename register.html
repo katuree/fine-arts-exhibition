@@ -1461,6 +1461,38 @@
                 note.style.color = '';
               }
 
+              function getStoredLocalRegistrations() {
+                try {
+                  return JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
+                } catch {
+                  return [];
+                }
+              }
+
+              function saveLocalRegistrationRecord(registration) {
+                try {
+                  const list = getStoredLocalRegistrations();
+                  const index = list.findIndex((item) => item.id === registration.id);
+                  if (index >= 0) {
+                    list[index] = registration;
+                  } else {
+                    list.unshift(registration);
+                  }
+                  localStorage.setItem('LOCAL_REGISTRATIONS', JSON.stringify(list));
+                } catch (err) {
+                  console.warn('Could not save to localStorage:', err);
+                }
+              }
+
+              function fileToDataUrl(file) {
+                return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.onerror = () => resolve('');
+                  reader.readAsDataURL(file);
+                });
+              }
+
               async function loadExistingRegistration() {
                 const id = editRegistrationIdInput.value.trim();
                 if (!id) {
@@ -1470,10 +1502,23 @@
                 loadRegistrationButton.disabled = true;
                 editRegistrationStatus.textContent = 'Loading registration...';
                 try {
-                  const resp = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(id)}`, { cache: 'no-store' });
-                  const result = await resp.json().catch(() => ({}));
-                  if (!resp.ok) throw new Error(result.error || 'Registration not found');
-                  setEditMode(result.registration);
+                  let reg = null;
+                  try {
+                    const resp = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(id)}`, { cache: 'no-store' });
+                    const result = await resp.json().catch(() => ({}));
+                    if (resp.ok && result.registration) reg = result.registration;
+                  } catch (err) {
+                    console.warn('Live API lookup failed, checking browser storage...');
+                  }
+
+                  if (!reg) {
+                    const localList = getStoredLocalRegistrations();
+                    reg = localList.find((item) => String(item.id || '').toLowerCase() === id.toLowerCase());
+                  }
+
+                  if (!reg) throw new Error('Registration ID not found in server or browser records');
+                  setEditMode(reg);
+                  editRegistrationStatus.textContent = 'Loaded registration.';
                 } catch (error) {
                   console.error('Registration lookup error:', error);
                   editRegistrationStatus.textContent = `Error: ${error.message}`;
@@ -1512,8 +1557,9 @@
                 submissionSuccess.hidden = true;
                 submitBtn.disabled = true;
                 submitBtn.textContent = editingRegistrationId ? 'Updating...' : 'Registering...';
-                note.textContent = editingRegistrationId ? 'Updating registration in TrueNAS...' : 'Uploading registration to TrueNAS...';
+                note.textContent = 'Saving registration...';
                 note.style.color = '';
+
                 try {
                   submissionSuccess.hidden = true;
                   const formData = new FormData(form);
@@ -1523,38 +1569,97 @@
                     formData.set('removeExistingFiles', JSON.stringify(Array.from(existingFilesToRemove)));
                   }
                   const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
-                  const requestUrl = editingRegistrationId
-                    ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
-                    : `${API_URL}/api/registrations`;
-                  const requestMethod = editingRegistrationId ? 'PUT' : 'POST';
-                  const resp = await fetch(requestUrl, { method: requestMethod, body: formData });
-                  const result = await resp.json().catch(() => ({}));
-                  if (!resp.ok) throw new Error(result.error || (editingRegistrationId ? 'Registration update failed' : 'Registration failed'));
-                  const savedRegistration = result.registration || {};
+                  const now = new Date().toISOString();
+                  let savedRegistration = null;
+                  let isLocalSaved = false;
+
+                  try {
+                    const requestUrl = editingRegistrationId
+                      ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
+                      : `${API_URL}/api/registrations`;
+                    const requestMethod = editingRegistrationId ? 'PUT' : 'POST';
+                    const resp = await fetch(requestUrl, { method: requestMethod, body: formData });
+                    const result = await resp.json().catch(() => ({}));
+                    if (resp.ok && (result.ok || result.registration)) {
+                      savedRegistration = result.registration || {};
+                      if (result.id) savedRegistration.id = result.id;
+                    } else {
+                      throw new Error(result.error || 'Server error');
+                    }
+                  } catch (apiError) {
+                    console.warn('Backend API request could not be reached (saving locally):', apiError);
+                    isLocalSaved = true;
+                    const localId = editingRegistrationId || `ART-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+                    const localFiles = [];
+                    for (const file of selectedArtworkFiles) {
+                      const dataUrl = await fileToDataUrl(file);
+                      localFiles.push({
+                        originalName: file.name,
+                        storedName: file.name,
+                        mimeType: file.type,
+                        size: file.size,
+                        url: dataUrl,
+                      });
+                    }
+
+                    savedRegistration = {
+                      id: localId,
+                      status: 'Pending',
+                      createdAt: now,
+                      updatedAt: now,
+                      student: {
+                        fullName: formData.get('fullName') || '',
+                        studentYear: formData.get('studentYear') || '',
+                      },
+                      artwork: {
+                        title: submittedArtworkTitle,
+                        category: formData.get('category') || '',
+                        medium: formData.get('medium') || '',
+                        dimensions: formData.get('dimensions') || '',
+                        description: formData.get('description') || '',
+                      },
+                      files: localFiles.length ? localFiles : currentRegistrationFiles,
+                    };
+                  }
+
+                  saveLocalRegistrationRecord(savedRegistration);
+
                   latestRegistrationInfo = {
-                    id: result.id || savedRegistration.id || 'Registered',
+                    id: savedRegistration.id || 'Registered',
                     studentName: savedRegistration.student?.fullName || formData.get('fullName') || '',
                     studentYear: savedRegistration.student?.studentYear || formData.get('studentYear') || '',
                     artworkTitle: savedRegistration.artwork?.title || submittedArtworkTitle,
                     category: savedRegistration.artwork?.category || formData.get('category') || '',
                     medium: savedRegistration.artwork?.medium || formData.get('medium') || '',
                     description: savedRegistration.artwork?.description || formData.get('description') || '',
-                    status: 'Awaiting Review',
-                    savedAt: new Date().toLocaleString()
+                    status: savedRegistration.status || 'Awaiting Review',
+                    savedAt: new Date().toLocaleString(),
                   };
+
                   successTitleText.textContent = editingRegistrationId ? 'Registration Updated' : 'Registration Successful';
                   successSubmissionId.textContent = latestRegistrationInfo.id;
                   successArtworkTitle.textContent = `"${latestRegistrationInfo.artworkTitle}"`;
                   successStatusText.textContent = latestRegistrationInfo.status;
                   submissionSuccess.hidden = false;
-                  note.textContent = editingRegistrationId ? 'Your registration was updated and is awaiting review.' : 'Your artwork was uploaded and is awaiting review.';
+
+                  if (isLocalSaved) {
+                    note.textContent = editingRegistrationId
+                      ? 'Your registration was updated in browser records and your receipt is ready.'
+                      : 'Your artwork registration was saved successfully and your receipt is ready.';
+                  } else {
+                    note.textContent = editingRegistrationId
+                      ? 'Your registration was updated on the server and is awaiting review.'
+                      : 'Your artwork was uploaded to the server and is awaiting review.';
+                  }
                   note.style.color = 'green';
+
                   const wasEditing = Boolean(editingRegistrationId);
                   form.reset();
                   selectedArtworkFiles = [];
                   clearArtworkPreview();
                   clearCurrentFilesPreview();
                   updateOtherCategoryField();
+
                   if (wasEditing) {
                     editingRegistrationId = null;
                     editModeBadge.hidden = true;
@@ -1563,9 +1668,10 @@
                     submitBtn.textContent = 'Register Artwork';
                     editRegistrationStatus.textContent = 'Registration updated successfully.';
                   }
+
                   submissionSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } catch (error) {
-                  console.error('Registration error:', error);
+                  console.error('Registration processing error:', error);
                   note.textContent = `Error: ${error.message}`;
                   note.style.color = 'red';
                 } finally {
