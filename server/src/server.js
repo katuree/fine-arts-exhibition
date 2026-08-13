@@ -97,7 +97,7 @@ const registrationUpload = multer({
     }
     cb(null, true);
   },
-});
+}).array('artworkFiles', MAX_ARTWORK_FILES);
 
 // ── Static files for frontend (if served from /docs) ──
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
