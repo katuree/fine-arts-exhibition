@@ -360,6 +360,32 @@
       overflow-wrap: anywhere;
     }
 
+    .remove-preview-button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .remove-preview-button:hover,
+    .remove-preview-button:focus-visible {
+      background: var(--ink);
+      color: #fff;
+      outline: 2px solid var(--focus);
+      outline-offset: 3px;
+    }
+
     .file-preview-card {
       display: flex;
       align-items: center;
@@ -390,6 +416,11 @@
       font-weight: 900;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+    }
+
+    .confirm-row {
+      color: var(--ink);
+      cursor: pointer;
     }
 
     .submit-row {
@@ -430,6 +461,7 @@
       text-align: center;
     }
 
+
     .edit-registration-panel {
       display: grid;
       gap: 14px;
@@ -440,9 +472,11 @@
       background: #f8fafb;
     }
 
+
     .edit-registration-panel[hidden] {
       display: none !important;
     }
+
 
     #artwork-registration-form[hidden] {
       display: none !important;
@@ -461,122 +495,306 @@
       line-height: 1.6;
     }
 
-    .submission-success {
-      max-width: 600px;
-      margin: 32px auto 0;
-      padding: 32px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #f8fafb;
-      text-align: center;
+    .edit-registration-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
     }
 
-    .submission-success[hidden] {
-      display: none !important;
+    .edit-registration-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
+
+    .small-action-button {
+      min-height: 46px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .small-action-button.secondary {
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .edit-mode-badge {
+      display: inline-flex;
+      width: fit-content;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .edit-status {
+      min-height: 22px;
+      color: var(--soft-ink);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+
+    .current-files-panel {
+      min-width: 0;
+      max-width: 100%;
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .current-files-panel[hidden] {
+      display: none;
+    }
+
+    .current-files-title {
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .current-files-help {
+      color: var(--soft-ink);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .current-file-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .current-file-link {
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+
+    .preview-item.marked-for-removal {
+      opacity: 0.58;
+      border-style: dashed;
+      background: #f7f8f8;
+    }
+
+    .removed-file-note {
+      color: var(--soft-ink);
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+
+    .current-files-panel .preview-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+    }
+
+    .current-files-panel .preview-item img {
+      height: clamp(150px, 30vw, 210px);
+    }
+
+
+
+    .submission-success {
+      display: grid;
+      gap: 18px;
+      margin-top: 24px;
+      padding: clamp(22px, 4vw, 34px);
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      background: #ffffff;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-success[hidden] { display: none; }
 
     .submission-success-title {
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
-      font-weight: 900;
-      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: clamp(1.7rem, 4vw, 3.2rem);
+      line-height: 0.95;
+      font-weight: 950;
+      letter-spacing: -0.04em;
       text-transform: uppercase;
-      margin-bottom: 20px;
     }
 
     .success-check {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      display: inline-grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 999px;
       background: var(--ink);
-      color: #fff;
-      text-align: center;
-      line-height: 40px;
-      margin-right: 12px;
+      color: var(--paper);
       font-size: 1.4rem;
+      line-height: 1;
+      flex: 0 0 auto;
     }
 
-    .success-field {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .success-field:last-child {
-      border-bottom: none;
-    }
+    .success-field { display: grid; gap: 6px; }
 
     .success-label {
       color: var(--soft-ink);
+      font-size: 0.78rem;
       font-weight: 900;
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
     }
 
     .success-value {
-      font-weight: 700;
+      font-size: clamp(1.1rem, 2vw, 1.55rem);
+      font-weight: 850;
+      line-height: 1.35;
     }
 
     .success-status {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #f5a623;
-      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--ink);
     }
 
+
     .success-actions {
-      margin-top: 20px;
       display: flex;
-      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
     }
 
     .success-action-button {
-      padding: 12px 24px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--ink);
       border-radius: 999px;
-      background: #fff;
-      color: var(--ink);
-      font-size: 0.8rem;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .success-action-button:hover {
       background: var(--ink);
-      color: #fff;
+      color: var(--paper);
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
     }
 
-    .artwork-files-container {
-      margin-top: 16px;
+    .success-action-button.secondary {
+      background: var(--paper);
+      color: var(--ink);
     }
 
-    @media (max-width: 768px) {
+    .success-action-button:hover,
+    .success-action-button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 22px rgba(7, 7, 7, 0.14);
+      outline: 2px solid var(--focus);
+      outline-offset: 4px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-width: 980px) {
       .registration-layout {
         grid-template-columns: 1fr;
       }
 
       .intro {
         position: static;
+        text-align: center;
+        justify-items: center;
       }
 
-      .field-grid {
+      h1 {
+        font-size: clamp(4rem, 13vw, 7rem);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        padding: 22px 18px 28px;
+      }
+
+      .top-link {
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        font-size: clamp(3.1rem, 15vw, 5rem);
+        line-height: 0.92;
+      }
+
+      .form-card {
+        padding: 20px;
+      }
+
+      .field-grid,
+      .category-grid,
+      .preview-grid,
+      .current-files-panel .preview-grid {
         grid-template-columns: 1fr;
       }
 
-      .category-grid {
+      .preview-item img,
+      .current-files-panel .preview-item img {
+        height: clamp(140px, 58vw, 220px);
+      }
+
+
+      .edit-registration-controls {
         grid-template-columns: 1fr;
+      }
+
+      .small-action-button {
+        width: 100%;
+      }
+
+      legend {
+        font-size: clamp(2rem, 10vw, 3rem);
+      }
+
+      .register-button {
+        width: 100%;
       }
     }
   </style>
@@ -589,7 +807,7 @@
       <div class="intro">
         <p class="eyebrow">Artwork Registration</p>
         <h1>Register Your Artwork</h1>
-        <p>Fill in your details below and upload your artwork files. The artwork will be reviewed before being added to the exhibition.</p>
+        <p>Enter student details, artwork details, and upload the artwork file for review.</p>
       </div>
 
       <div class="form-card">
@@ -609,7 +827,6 @@
         </section>
 
         <form id="artwork-registration-form" action="#" method="post" enctype="multipart/form-data">
-          <!-- Artist Information -->
           <fieldset>
             <legend>Artist Information</legend>
             <div class="field-grid">
@@ -630,19 +847,20 @@
                 </select>
               </div>
             </div>
+
             <div class="field">
               <label for="profile-picture">Profile Picture</label>
               <input id="profile-picture" name="profilePicture" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
             </div>
           </fieldset>
 
-          <!-- Artwork Information -->
           <fieldset>
             <legend>Artwork Information</legend>
             <div class="field">
               <label for="artwork-title">Artwork Title <span class="required">*</span></label>
-              <input id="artwork-title" name="artworkTitle" type="text" required placeholder="Enter artwork title" />
+              <input id="artwork-title" name="artworkTitle" type="text" required />
             </div>
+
             <div class="radio-group">
               <p class="group-label">Category <span class="required">*</span></p>
               <div class="category-grid">
@@ -651,280 +869,829 @@
                 <label class="radio-card"><input type="radio" name="category" value="Sculpture" /> <span>Sculpture</span></label>
                 <label class="radio-card"><input type="radio" name="category" value="Printmaking" /> <span>Printmaking</span></label>
                 <label class="radio-card"><input type="radio" name="category" value="Installation" /> <span>Installation</span></label>
-                <label class="radio-card"><input type="radio" name="category" value="Other" id="category-other" /> <span>Other</span></label>
+                <label class="radio-card"><input id="category-other" type="radio" name="category" value="Other" /> <span>Other</span></label>
               </div>
             </div>
+
             <div class="field other-category-field" id="other-category-field" hidden>
               <label for="other-category">Other Category <span class="required">*</span></label>
               <input id="other-category" name="otherCategory" type="text" placeholder="Type the category" />
             </div>
+
             <div class="field-grid">
               <div class="field">
                 <label for="medium">Medium <span class="required">*</span></label>
-                <input id="medium" name="medium" type="text" required placeholder="e.g., Oil on Canvas" />
+                <input id="medium" name="medium" type="text" required />
               </div>
               <div class="field">
                 <label for="dimensions">Dimensions</label>
                 <input id="dimensions" name="dimensions" type="text" placeholder="Example: 24 × 36 in" />
               </div>
             </div>
+
             <div class="field">
               <label for="description">Description</label>
-              <textarea id="description" name="description" placeholder="Brief description of the artwork"></textarea>
+              <textarea id="description" name="description"></textarea>
             </div>
-            <div class="artwork-files-container">
-              <label for="artwork-file">Artwork Files <span class="required">*</span></label>
-              <label class="upload-box" for="artwork-file">
-                <input id="artwork-file" name="artworkFiles[]" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple />
-                <span class="upload-copy">
-                  <strong>Drag files here</strong>
-                  <span>JPG / PNG / PDF • Multiple files allowed</span>
-                </span>
-              </label>
-              <div class="upload-preview" id="artwork-preview" aria-live="polite" hidden>
-                <p class="upload-preview-title">Artwork Previews</p>
-                <p class="upload-preview-count" id="artwork-preview-count"></p>
-                <div id="artwork-preview-content"></div>
-              </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Upload Artwork</legend>
+            <label class="upload-box" for="artwork-file">
+              <input id="artwork-file" name="artworkFiles[]" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple required />
+              <span class="upload-copy">
+                <strong>Drag artworks here</strong>
+                <span>JPG / PNG / PDF • Multiple files allowed</span>
+              </span>
+            </label>
+            <div class="upload-preview" id="artwork-preview" aria-live="polite" hidden>
+              <p class="upload-preview-title">Artwork Previews</p>
+              <p class="upload-preview-count" id="artwork-preview-count"></p>
+              <div id="artwork-preview-content"></div>
+            </div>
+            <div class="current-files-panel" id="current-files-panel" aria-live="polite" hidden>
+              <p class="current-files-title">Current Uploaded Artwork</p>
+              <p class="current-files-help">These files are already saved. They will stay unless you choose new files above.</p>
+              <div id="current-files-content"></div>
             </div>
           </fieldset>
 
           <label class="confirm-row" for="ownership-confirmation">
             <input id="ownership-confirmation" name="ownershipConfirmation" type="checkbox" required />
-            <span>I confirm that all artworks I am uploading are mine.</span>
+            <span>I confirm this artwork is mine.</span>
           </label>
 
           <div class="submit-row">
-            <button class="register-button" type="submit">Register Artwork</button>
-          </div>
+                      <button class="register-button" type="submit">Register Artwork</button>
+                    </div>
 
-          <p class="note" aria-live="polite">Uploads will be saved to TrueNAS / MEGA.</p>
-        </form>
+                    <p class="note" aria-live="polite">Uploads will be saved to TrueNAS / MEGA.</p>
+                  </form>
 
-        <section id="submission-success" class="submission-success" aria-live="polite" hidden>
-          <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> <span id="success-title-text">Registration Successful</span></h2>
-          <div class="success-field">
-            <span class="success-label">Registration ID</span>
-            <span class="success-value" id="success-id"></span>
-          </div>
-          <div class="success-field">
-            <span class="success-label">Status</span>
-            <span class="success-value success-status"><span class="status-dot" aria-hidden="true"></span><span id="success-status-text">Awaiting Review</span></span>
-          </div>
-          <div class="success-actions">
-            <button class="success-action-button" type="button" id="save-registration-info">Save Registration Info</button>
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
+                  <section id="submission-success" class="submission-success" aria-live="polite" hidden>
+                    <h2 class="submission-success-title"><span class="success-check" aria-hidden="true">✓</span> <span id="success-title-text">Registration Successful</span></h2>
+                    <div class="success-field">
+                      <span class="success-label">Registration ID</span>
+                      <span class="success-value" id="success-submission-id"></span>
+                    </div>
+                    <div class="success-field">
+                      <span class="success-label">Artwork</span>
+                      <span class="success-value" id="success-artwork-title"></span>
+                    </div>
+                    <div class="success-field">
+                      <span class="success-label">Status</span>
+                      <span class="success-value success-status"><span class="status-dot" aria-hidden="true"></span><span id="success-status-text">Awaiting Review</span></span>
+                    </div>
+                    <div class="success-actions">
+                      <button class="success-action-button" type="button" id="save-registration-info">Save Registration Info</button>
+                    </div>
+                  </section>
+                </div>
+              </section>
+            </main>
+            <script>
+              function getApiUrl() {
+                if (typeof window !== 'undefined') {
+                  const params = new URLSearchParams(window.location.search);
+                  if (params.get('api')) return params.get('api').replace(/\/$/, '');
+                  const stored = localStorage.getItem('EXHIBITION_API_URL');
+                  if (stored) return stored.replace(/\/$/, '');
+                  if (window.location.protocol.startsWith('http')) {
+                    if (window.location.port === '8080' || window.location.port === '8088') {
+                      return window.location.origin;
+                    }
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                      return 'http://localhost:8080';
+                    }
+                  }
+                }
+                return 'http://192.168.1.45:8088';
+              }
+              const API_URL = getApiUrl();
 
-  <script>
-    const API_URL = getApiUrl();
+              const categoryInputs = document.querySelectorAll('input[name="category"]');
+              const otherCategoryField = document.getElementById('other-category-field');
+              const otherCategoryInput = document.getElementById('other-category');
+              const artworkFileInput = document.getElementById('artwork-file');
+              const artworkPreview = document.getElementById('artwork-preview');
+              const artworkPreviewCount = document.getElementById('artwork-preview-count');
+              const artworkPreviewContent = document.getElementById('artwork-preview-content');
+              const currentFilesPanel = document.getElementById('current-files-panel');
+              const currentFilesContent = document.getElementById('current-files-content');
+              const form = document.getElementById('artwork-registration-form');
+              const isEditPage = new URLSearchParams(window.location.search).get('mode') === 'edit';
+              const note = form.querySelector('.note');
+              const submissionSuccess = document.getElementById('submission-success');
+              const successSubmissionId = document.getElementById('success-submission-id');
+              const successArtworkTitle = document.getElementById('success-artwork-title');
+              const successStatusText = document.getElementById('success-status-text');
+              const saveRegistrationInfoButton = document.getElementById('save-registration-info');
+              const editRegistrationIdInput = document.getElementById('edit-registration-id');
+              const loadRegistrationButton = document.getElementById('load-registration-button');
+              const cancelEditButton = document.getElementById('cancel-edit-button');
+              const editModeBadge = document.getElementById('edit-mode-badge');
+              const editRegistrationStatus = document.getElementById('edit-registration-status');
+              const successTitleText = document.getElementById('success-title-text');
+              let editingRegistrationId = null;
+              let latestRegistrationInfo = null;
+              let currentRegistrationFiles = [];
+              let existingFilesToRemove = new Set();
+              let artworkPreviewUrls = [];
+              let selectedArtworkFiles = [];
 
-    function getApiUrl() {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('api')) return params.get('api').replace(/\/$/, '');
-        const stored = localStorage.getItem('EXHIBITION_API_URL');
-        if (stored) return stored.replace(/\/$/, '');
-        if (window.location.protocol.startsWith('http')) {
-          if (window.location.port === '8080' || window.location.port === '8088') {
-            return window.location.origin;
-          }
-          return 'https://finearts-api.katuree.com';
-        }
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return 'http://localhost:8080';
-        }
-      }
-      return 'http://192.168.1.45:8088';
-    }
+              note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
 
-    // Category Other toggle
-    document.querySelectorAll('input[name="category"]').forEach(input => {
-      input.addEventListener('change', () => {
-        const isOther = input.checked && input.value === 'Other';
-        document.getElementById('other-category-field').hidden = !isOther;
-        const otherInput = document.getElementById('other-category');
-        if (otherInput) otherInput.required = isOther;
-      });
-    });
+              function updateOtherCategoryField() {
+                const selectedCategory = document.querySelector('input[name="category"]:checked');
+                const isOtherSelected = selectedCategory?.value === 'Other';
+                otherCategoryField.hidden = !isOtherSelected;
+                otherCategoryInput.required = isOtherSelected;
+                if (!isOtherSelected) otherCategoryInput.value = '';
+              }
 
-    // File preview
-    const fileInput = document.getElementById('artwork-file');
-    fileInput.addEventListener('change', (e) => {
-      renderFilePreview(e.target.files);
-    });
+              categoryInputs.forEach((input) => input.addEventListener('change', updateOtherCategoryField));
 
-    function renderFilePreview(files) {
-      const preview = document.getElementById('artwork-preview');
-      const countEl = document.getElementById('artwork-preview-count');
-      const contentEl = document.getElementById('artwork-preview-content');
+              function clearArtworkPreview() {
+                artworkPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                artworkPreviewUrls = [];
+                artworkPreviewCount.textContent = '';
+                artworkPreviewContent.innerHTML = '';
+                artworkPreview.hidden = true;
+              }
 
-      if (!files.length) {
-        preview.hidden = true;
-        return;
-      }
+              function syncArtworkFileInput() {
+                if (typeof DataTransfer === 'undefined') return;
+                try {
+                  const dataTransfer = new DataTransfer();
+                  selectedArtworkFiles.forEach((file) => dataTransfer.items.add(file));
+                  artworkFileInput.files = dataTransfer.files;
+                } catch (error) {
+                  console.warn('Could not sync edited file list back to input:', error);
+                }
+              }
 
-      preview.hidden = false;
-      countEl.textContent = `${files.length} file${files.length === 1 ? '' : 's'} selected`;
-      contentEl.innerHTML = '';
+              function removeArtworkFile(indexToRemove) {
+                selectedArtworkFiles = selectedArtworkFiles.filter((_, index) => index !== indexToRemove);
+                syncArtworkFileInput();
+                renderArtworkPreviews();
+              }
 
-      const previewGrid = document.createElement('div');
-      previewGrid.className = 'preview-grid';
+              function clearCurrentFilesPreview() {
+                currentRegistrationFiles = [];
+                existingFilesToRemove.clear();
+                currentFilesContent.innerHTML = '';
+                currentFilesPanel.hidden = true;
+              }
 
-      Array.from(files).forEach((file) => {
-        const previewItem = document.createElement('div');
-        previewItem.className = 'preview-item';
+              function fileRemovalKey(file) {
+                return file.storedName || file.originalName || file.megaSyncPath || '';
+              }
 
-        if (file.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(file);
-          img.alt = `Preview of ${file.name}`;
-          img.loading = 'lazy';
-          previewItem.appendChild(img);
-        } else {
-          const card = document.createElement('div');
-          card.className = 'file-preview-card';
-          card.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${file.type === 'application/pdf' ? 'PDF' : 'File'}</span>`;
-          card.querySelector('.file-preview-name').textContent = file.name;
-          previewItem.appendChild(card);
-        }
+              function removeExistingFile(fileKey) {
+                if (!fileKey) return;
+                existingFilesToRemove.add(fileKey);
+                renderCurrentFilesPreview(currentRegistrationFiles);
+              }
 
-        const caption = document.createElement('p');
-        caption.className = 'preview-caption';
-        caption.textContent = file.name;
-        previewItem.appendChild(caption);
-        previewGrid.appendChild(previewItem);
-      });
+              function undoRemoveExistingFile(fileKey) {
+                if (!fileKey) return;
+                existingFilesToRemove.delete(fileKey);
+                renderCurrentFilesPreview(currentRegistrationFiles);
+              }
 
-      contentEl.appendChild(previewGrid);
-    }
+              function renderCurrentFilesPreview(files = []) {
+                currentRegistrationFiles = Array.isArray(files) ? files : [];
+                currentFilesContent.innerHTML = '';
+                if (!currentRegistrationFiles.length) {
+                  currentFilesPanel.hidden = true;
+                  return;
+                }
 
-    // Form submission
-    const form = document.getElementById('artwork-registration-form');
-    const submissionSuccess = document.getElementById('submission-success');
-    const saveRegistrationInfoButton = document.getElementById('save-registration-info');
-    const note = form.querySelector('.note');
-    let latestRegistrationInfo = null;
+                currentFilesPanel.hidden = false;
+                const previewGrid = document.createElement('div');
+                previewGrid.className = 'preview-grid';
+                const remainingCount = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file))).length;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+                currentRegistrationFiles.forEach((file) => {
+                  const previewItem = document.createElement('div');
+                  previewItem.className = 'preview-item';
+                  const fileKey = fileRemovalKey(file);
+                  const isMarkedForRemoval = existingFilesToRemove.has(fileKey);
+                  if (isMarkedForRemoval) previewItem.classList.add('marked-for-removal');
 
-      // Validate category
-      const categoryInput = document.querySelector('input[name="category"]:checked');
-      if (!categoryInput) {
-        alert('Please select a category.');
-        return;
-      }
-      if (categoryInput.value === 'Other') {
-        const otherCategory = document.getElementById('other-category');
-        if (!otherCategory.value.trim()) {
-          alert('Please specify the other category.');
-          otherCategory.focus();
-          return;
-        }
-      }
+                  const fileUrl = file.url || `${API_URL}/storage/${String(file.megaSyncPath || '').split('/').map(encodeURIComponent).join('/')}`;
+                  const mimeType = file.mimeType || '';
+                  const fileName = file.originalName || file.storedName || 'Artwork file';
 
-      // Validate file
-      if (!fileInput.files.length) {
-        alert('Please upload at least one artwork file.');
-        return;
-      }
+                  if (mimeType.startsWith('image/') && fileUrl) {
+                    const image = document.createElement('img');
+                    image.src = fileUrl;
+                    image.alt = `Current uploaded artwork: ${fileName}`;
+                    image.loading = 'lazy';
+                    previewItem.appendChild(image);
+                  } else {
+                    const fileCard = document.createElement('div');
+                    fileCard.className = 'file-preview-card';
+                    fileCard.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${mimeType === 'application/pdf' ? 'PDF' : 'File'}</span>`;
+                    fileCard.querySelector('.file-preview-name').textContent = fileName;
+                    previewItem.appendChild(fileCard);
+                  }
 
-      // Validate ownership confirmation
-      const ownershipCheck = document.getElementById('ownership-confirmation');
-      if (!ownershipCheck.checked) {
-        alert('Please confirm that you own the artworks you are uploading.');
-        return;
-      }
+                  const caption = document.createElement('p');
+                  caption.className = 'preview-caption';
+                  caption.textContent = fileName;
+                  previewItem.appendChild(caption);
 
-      const formData = new FormData(form);
-      const submitBtn = form.querySelector('.register-button');
-      latestRegistrationInfo = null;
-      submissionSuccess.hidden = true;
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Registering...';
-      note.textContent = 'Saving registration...';
-      note.style.color = '';
+                  const actions = document.createElement('div');
+                  actions.className = 'current-file-actions';
+                  if (fileUrl) {
+                    const link = document.createElement('a');
+                    link.className = 'current-file-link';
+                    link.href = fileUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    link.textContent = 'Open';
+                    actions.appendChild(link);
+                  }
 
-      try {
-        const resp = await fetch(`${API_URL}/api/registrations`, {
-          method: 'POST',
-          body: formData,
-        });
+                  const removeButton = document.createElement('button');
+                  removeButton.className = 'remove-preview-button';
+                  removeButton.type = 'button';
+                  removeButton.textContent = isMarkedForRemoval ? 'Undo Remove' : 'Remove';
+                  removeButton.setAttribute('aria-label', `${isMarkedForRemoval ? 'Undo remove' : 'Remove'} ${fileName}`);
+                  removeButton.addEventListener('click', () => {
+                    if (isMarkedForRemoval) undoRemoveExistingFile(fileKey);
+                    else removeExistingFile(fileKey);
+                  });
+                  actions.appendChild(removeButton);
+                  previewItem.appendChild(actions);
 
-        const result = await resp.json().catch(() => ({}));
+                  if (isMarkedForRemoval) {
+                    const removedNote = document.createElement('p');
+                    removedNote.className = 'removed-file-note';
+                    removedNote.textContent = 'Will be removed after update';
+                    previewItem.appendChild(removedNote);
+                  }
 
-        if (resp.ok && result.ok && result.registrations) {
-          latestRegistrationInfo = result;
-          submissionSuccess.hidden = false;
-          document.getElementById('success-id').textContent = result.registrations[0].id;
-          note.style.color = '#21c45d';
-          note.textContent = 'Artwork registered successfully!';
-          form.reset();
-          document.getElementById('artwork-preview').hidden = true;
-        } else {
-          throw new Error(result.error || 'Server error');
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-        note.textContent = `Error: ${error.message}`;
-        note.style.color = '#e74c3c';
-        alert(`Registration failed: ${error.message}`);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Register Artwork';
-      }
-    });
+                  previewGrid.appendChild(previewItem);
+                });
 
-    saveRegistrationInfoButton.addEventListener('click', () => {
-      if (!latestRegistrationInfo) return;
-      const info = latestRegistrationInfo.registrations[0];
-      const info = latestRegistrationInfo.registrations[0];
-      const receiptHtml = `<!doctype html>
+                currentFilesContent.appendChild(previewGrid);
+                editRegistrationStatus.textContent = `${remainingCount} current file${remainingCount === 1 ? '' : 's'} will remain. Upload new files to replace all current files.`;
+              }
+
+              function renderArtworkPreviews() {
+                const files = selectedArtworkFiles;
+                clearArtworkPreview();
+                if (!files.length) return;
+                artworkPreview.hidden = false;
+                artworkPreviewCount.textContent = `${files.length} file${files.length === 1 ? '' : 's'} selected`;
+                const previewGrid = document.createElement('div');
+                previewGrid.className = 'preview-grid';
+                files.forEach((file, index) => {
+                  const previewItem = document.createElement('div');
+                  previewItem.className = 'preview-item';
+                  if (file.type.startsWith('image/')) {
+                    const artworkPreviewUrl = URL.createObjectURL(file);
+                    artworkPreviewUrls.push(artworkPreviewUrl);
+                    const image = document.createElement('img');
+                    image.src = artworkPreviewUrl;
+                    image.alt = `Preview of ${file.name}`;
+                    previewItem.appendChild(image);
+                  } else {
+                    const fileCard = document.createElement('div');
+                    fileCard.className = 'file-preview-card';
+                    fileCard.innerHTML = `<span class="file-preview-name"></span><span class="file-preview-type">${file.type === 'application/pdf' ? 'PDF' : 'File'}</span>`;
+                    fileCard.querySelector('.file-preview-name').textContent = file.name;
+                    previewItem.appendChild(fileCard);
+                  }
+                  const caption = document.createElement('p');
+                  caption.className = 'preview-caption';
+                  caption.textContent = file.name;
+                  previewItem.appendChild(caption);
+                  const removeButton = document.createElement('button');
+                  removeButton.className = 'remove-preview-button';
+                  removeButton.type = 'button';
+                  removeButton.textContent = 'Remove';
+                  removeButton.setAttribute('aria-label', `Remove ${file.name}`);
+                  removeButton.addEventListener('click', () => removeArtworkFile(index));
+                  previewItem.appendChild(removeButton);
+                  previewGrid.appendChild(previewItem);
+                });
+                artworkPreviewContent.appendChild(previewGrid);
+              }
+
+              function updateArtworkPreview() {
+                submissionSuccess.hidden = true;
+                selectedArtworkFiles = Array.from(artworkFileInput.files || []);
+                if (selectedArtworkFiles.length) {
+                  existingFilesToRemove.clear();
+                  if (editingRegistrationId && currentRegistrationFiles.length) {
+                    editRegistrationStatus.textContent = 'New files selected. Updating will replace all current uploaded artwork files.';
+                    renderCurrentFilesPreview(currentRegistrationFiles);
+                  }
+                }
+                renderArtworkPreviews();
+              }
+              artworkFileInput.addEventListener('change', updateArtworkPreview);
+
+              function safeFilePart(value) {
+                return String(value || 'registration')
+                  .trim()
+                  .replace(/[^a-z0-9._-]+/gi, '-')
+                  .replace(/^-+|-+$/g, '')
+                  .slice(0, 80) || 'registration';
+              }
+
+              function escapeHtml(value) {
+                return String(value ?? '')
+                  .replaceAll('&', '&amp;')
+                  .replaceAll('<', '&lt;')
+                  .replaceAll('>', '&gt;')
+                  .replaceAll('"', '&quot;')
+                  .replaceAll("'", '&#39;');
+              }
+
+              function buildRegistrationReceiptHtml(info) {
+                const fields = [
+                  ['Registration ID', info.id],
+                  ['Student Name', info.studentName],
+                  ['Batch', info.studentYear],
+                  ['Artwork Title', info.artworkTitle],
+                  ['Category', info.category],
+                  ['Medium', info.medium],
+                  ['Status', info.status],
+                  ['Saved At', info.savedAt]
+                ].filter(([, value]) => value);
+
+                const fieldRows = fields.map(([label, value]) => `
+                  <div class="field">
+                    <span>${escapeHtml(label)}</span>
+                    <strong>${escapeHtml(value)}</strong>
+                  </div>`).join('');
+
+                const description = info.description ? `
+                  <section class="description">
+                    <span>Description</span>
+                    <p>${escapeHtml(info.description)}</p>
+                  </section>` : '';
+
+                return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Registration Receipt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registration Receipt - ${escapeHtml(info.id)}</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; }
-    h1 { text-transform: uppercase; }
-    .id { background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 12px 0; word-break: break-all; }
-    .artwork { border: 1px solid #ddd; padding: 16px; margin: 12px 0; border-radius: 8px; }
-    .artwork h2 { margin-top: 0; }
-    table { width: 100%; border-collapse: collapse; }
-    td { padding: 8px; border-bottom: 1px solid #eee; }
-    td:first-child { font-weight: bold; color: #666; width: 140px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      background: #f3f4f4;
+      color: #050505;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .receipt {
+      width: min(760px, 100%);
+      border: 1px solid #d7dddd;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(0,0,0,.12);
+    }
+    .header {
+      padding: 34px;
+      background: #050505;
+      color: #fff;
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #d6d6d6;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 8vw, 72px);
+      line-height: .86;
+      letter-spacing: -.07em;
+      text-transform: uppercase;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 22px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #21c45d; }
+    .content { padding: 28px 34px 34px; }
+    .id-box {
+      margin-bottom: 22px;
+      padding: 18px;
+      border: 1px dashed #111;
+      border-radius: 16px;
+      background: #fbfbfb;
+    }
+    .id-box span, .field span, .description span, .footer span {
+      display: block;
+      margin-bottom: 7px;
+      color: #6a6f73;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .id-box strong {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid #d7dddd;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .field strong {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+    .description {
+      margin-top: 12px;
+      padding: 16px;
+      border: 1px solid #d7dddd;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .description p { margin: 0; line-height: 1.55; }
+    .footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #d7dddd;
+      color: #4f565b;
+      line-height: 1.55;
+    }
+    @media (max-width: 620px) {
+      body { padding: 14px; }
+      .header, .content { padding: 24px; }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <h1>Registration Receipt</h1>
-  <p>Fine Arts Exhibition ANU</p>
-  <div class="id"><strong>${info.id}</strong></div>
-  <table>
-    <tr><td>Artist</td><td>${info.student?.fullName || ''}</td></tr>
-    <tr><td>Batch</td><td>${info.student?.studentYear || ''}</td></tr>
-    <tr><td>Artwork</td><td>${info.artwork?.title || ''}</td></tr>
-    <tr><td>Category</td><td>${info.artwork?.category || ''}</td></tr>
-    <tr><td>Medium</td><td>${info.artwork?.medium || ''}</td></tr>
-    <tr><td>Dimensions</td><td>${info.artwork?.dimensions || ''}</td></tr>
-    <tr><td>Description</td><td>${info.artwork?.description || ''}</td></tr>
-    <tr><td>Status</td><td>Awaiting Review</td></tr>
-    <tr><td>Date</td><td>${new Date().toLocaleDateString()}</td></tr>
-  </table>
+  <article class="receipt">
+    <header class="header">
+      <p class="eyebrow">Fine Arts Exhibition ANU</p>
+      <h1>Registration<br>Receipt</h1>
+      <div class="status-pill"><span class="dot"></span>${escapeHtml(info.status || 'Awaiting Review')}</div>
+    </header>
+    <main class="content">
+      <section class="id-box">
+        <span>Registration ID</span>
+        <strong>${escapeHtml(info.id)}</strong>
+      </section>
+      <section class="grid">${fieldRows}</section>
+      ${description}
+      <footer class="footer">
+        <span>Important</span>
+        Please keep this receipt for your records. Your artwork registration is saved and awaiting review.
+      </footer>
+    </main>
+  </article>
 </body>
 </html>`;
+              }
 
-      const blob = new Blob([receiptHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'fine-arts-registration-receipt.html';
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-  </script>
-</body>
-</html>
+              function saveRegistrationInfo() {
+                if (!latestRegistrationInfo) return;
+                const receiptHtml = buildRegistrationReceiptHtml(latestRegistrationInfo);
+                const blob = new Blob([receiptHtml], { type: 'text/html;charset=utf-8' });
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `${safeFilePart(latestRegistrationInfo.id)}-${safeFilePart(latestRegistrationInfo.artworkTitle)}-receipt.html`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(downloadUrl);
+              }
+
+              saveRegistrationInfoButton.addEventListener('click', saveRegistrationInfo);
+
+              function setInputValue(name, value) {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (input) input.value = value || '';
+              }
+
+              function setCategoryValue(category) {
+                const normalizedCategory = category || '';
+                const matchingCategory = form.querySelector(`input[name="category"][value="${CSS.escape(normalizedCategory)}"]`);
+                const otherRadio = document.getElementById('category-other');
+                if (matchingCategory) {
+                  matchingCategory.checked = true;
+                } else {
+                  otherRadio.checked = true;
+                  otherCategoryInput.value = normalizedCategory;
+                }
+                updateOtherCategoryField();
+              }
+
+              function setEditMode(registration) {
+                form.hidden = false;
+                editingRegistrationId = registration.id;
+                editRegistrationIdInput.value = registration.id;
+                editModeBadge.hidden = false;
+                cancelEditButton.hidden = false;
+                artworkFileInput.required = false;
+                form.querySelector('.register-button').textContent = 'Update Registration';
+                editRegistrationStatus.textContent = `Editing registration ${registration.id}. Upload new files only if you want to replace the existing artwork files.`;
+                setInputValue('fullName', registration.student?.fullName);
+                setInputValue('studentYear', registration.student?.studentYear);
+                setInputValue('artworkTitle', registration.artwork?.title);
+                setCategoryValue(registration.artwork?.category);
+                setInputValue('medium', registration.artwork?.medium);
+                setInputValue('dimensions', registration.artwork?.dimensions);
+                setInputValue('description', registration.artwork?.description);
+                selectedArtworkFiles = [];
+                existingFilesToRemove.clear();
+                artworkFileInput.value = '';
+                clearArtworkPreview();
+                renderCurrentFilesPreview(registration.files || []);
+                note.textContent = 'Edit mode: current artwork files will stay unless you select new files.';
+                note.style.color = '';
+              }
+
+              function clearEditMode() {
+                editingRegistrationId = null;
+                editRegistrationIdInput.value = '';
+                editModeBadge.hidden = true;
+                cancelEditButton.hidden = true;
+                document.getElementById('edit-registration').hidden = true;
+                form.hidden = isEditPage;
+                artworkFileInput.required = true;
+                form.querySelector('.register-button').textContent = 'Register Artwork';
+                editRegistrationStatus.textContent = '';
+                form.reset();
+                selectedArtworkFiles = [];
+                clearArtworkPreview();
+                clearCurrentFilesPreview();
+                updateOtherCategoryField();
+                note.textContent = 'Uploads will be saved to TrueNAS / MEGA.';
+                note.style.color = '';
+              }
+
+              function getStoredLocalRegistrations() {
+                try {
+                  return JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
+                } catch {
+                  return [];
+                }
+              }
+
+              function saveLocalRegistrationRecord(registration) {
+                try {
+                  const list = getStoredLocalRegistrations();
+                  const index = list.findIndex((item) => item.id === registration.id);
+                  if (index >= 0) {
+                    list[index] = registration;
+                  } else {
+                    list.unshift(registration);
+                  }
+                  localStorage.setItem('LOCAL_REGISTRATIONS', JSON.stringify(list));
+                } catch (err) {
+                  console.warn('Could not save to localStorage:', err);
+                }
+              }
+
+              function fileToDataUrl(file) {
+                return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.onerror = () => resolve('');
+                  reader.readAsDataURL(file);
+                });
+              }
+
+              async function loadExistingRegistration() {
+                const id = editRegistrationIdInput.value.trim();
+                if (!id) {
+                  editRegistrationStatus.textContent = 'Enter a Registration ID first.';
+                  return;
+                }
+                loadRegistrationButton.disabled = true;
+                editRegistrationStatus.textContent = 'Loading registration...';
+                try {
+                  let reg = null;
+                  try {
+                    const resp = await fetch(`${API_URL}/api/registrations/${encodeURIComponent(id)}`, { cache: 'no-store' });
+                    const result = await resp.json().catch(() => ({}));
+                    if (resp.ok && result.registration) reg = result.registration;
+                  } catch (err) {
+                    console.warn('Live API lookup failed, checking browser storage...');
+                  }
+
+                  if (!reg) {
+                    const localList = getStoredLocalRegistrations();
+                    reg = localList.find((item) => String(item.id || '').toLowerCase() === id.toLowerCase());
+                  }
+
+                  if (!reg) throw new Error('Registration ID not found in server or browser records');
+                  setEditMode(reg);
+                  editRegistrationStatus.textContent = 'Loaded registration.';
+                } catch (error) {
+                  console.error('Registration lookup error:', error);
+                  editRegistrationStatus.textContent = `Error: ${error.message}`;
+                } finally {
+                  loadRegistrationButton.disabled = false;
+                }
+              }
+
+              loadRegistrationButton.addEventListener('click', loadExistingRegistration);
+              cancelEditButton.addEventListener('click', clearEditMode);
+
+              form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const requiredFields = ['fullName', 'studentYear', 'artworkTitle', 'category', 'medium'];
+                for (const field of requiredFields) {
+                  const input = form.querySelector(`[name="${field}"]`);
+                  if (input && !input.value.trim()) {
+                    alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+                    input.focus();
+                    return;
+                  }
+                }
+                if (!editingRegistrationId && selectedArtworkFiles.length === 0) {
+                  alert('Please select at least one artwork file');
+                  return;
+                }
+                if (editingRegistrationId && selectedArtworkFiles.length === 0 && currentRegistrationFiles.length > 0) {
+                  const remainingFiles = currentRegistrationFiles.filter((file) => !existingFilesToRemove.has(fileRemovalKey(file)));
+                  if (!remainingFiles.length) {
+                    alert('At least one artwork file must remain. Upload a replacement before removing all existing files.');
+                    return;
+                  }
+                }
+                const submitBtn = form.querySelector('.register-button');
+                latestRegistrationInfo = null;
+                submissionSuccess.hidden = true;
+                submitBtn.disabled = true;
+                submitBtn.textContent = editingRegistrationId ? 'Updating...' : 'Registering...';
+                note.textContent = 'Saving registration...';
+                note.style.color = '';
+
+                try {
+                  submissionSuccess.hidden = true;
+                  const formData = new FormData(form);
+                  formData.delete('artworkFiles[]');
+                  selectedArtworkFiles.forEach((file) => formData.append('artworkFiles', file));
+                  if (editingRegistrationId && selectedArtworkFiles.length === 0 && existingFilesToRemove.size) {
+                    formData.set('removeExistingFiles', JSON.stringify(Array.from(existingFilesToRemove)));
+                  }
+                  const submittedArtworkTitle = formData.get('artworkTitle') || 'Untitled Artwork';
+                  const now = new Date().toISOString();
+                  let savedRegistration = null;
+                  let isLocalSaved = false;
+
+                  try {
+                    const requestUrl = editingRegistrationId
+                      ? `${API_URL}/api/registrations/${encodeURIComponent(editingRegistrationId)}`
+                      : `${API_URL}/api/registrations`;
+                    const requestMethod = editingRegistrationId ? 'PUT' : 'POST';
+                    const resp = await fetch(requestUrl, { method: requestMethod, body: formData });
+                    const result = await resp.json().catch(() => ({}));
+                    if (resp.ok && (result.ok || result.registration)) {
+                      savedRegistration = result.registration || {};
+                      if (result.id) savedRegistration.id = result.id;
+                    } else {
+                      throw new Error(result.error || 'Server error');
+                    }
+                  } catch (apiError) {
+                    console.warn('Backend API request could not be reached (saving locally):', apiError);
+                    isLocalSaved = true;
+                    const localId = editingRegistrationId || `ART-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+                    const localFiles = [];
+                    for (const file of selectedArtworkFiles) {
+                      const dataUrl = await fileToDataUrl(file);
+                      localFiles.push({
+                        originalName: file.name,
+                        storedName: file.name,
+                        mimeType: file.type,
+                        size: file.size,
+                        url: dataUrl,
+                      });
+                    }
+
+                    savedRegistration = {
+                      id: localId,
+                      status: 'Pending',
+                      createdAt: now,
+                      updatedAt: now,
+                      student: {
+                        fullName: formData.get('fullName') || '',
+                        studentYear: formData.get('studentYear') || '',
+                      },
+                      artwork: {
+                        title: submittedArtworkTitle,
+                        category: formData.get('category') || '',
+                        medium: formData.get('medium') || '',
+                        dimensions: formData.get('dimensions') || '',
+                        description: formData.get('description') || '',
+                      },
+                      files: localFiles.length ? localFiles : currentRegistrationFiles,
+                    };
+                  }
+
+                  saveLocalRegistrationRecord(savedRegistration);
+
+                  latestRegistrationInfo = {
+                    id: savedRegistration.id || 'Registered',
+                    studentName: savedRegistration.student?.fullName || formData.get('fullName') || '',
+                    studentYear: savedRegistration.student?.studentYear || formData.get('studentYear') || '',
+                    artworkTitle: savedRegistration.artwork?.title || submittedArtworkTitle,
+                    category: savedRegistration.artwork?.category || formData.get('category') || '',
+                    medium: savedRegistration.artwork?.medium || formData.get('medium') || '',
+                    description: savedRegistration.artwork?.description || formData.get('description') || '',
+                    status: savedRegistration.status || 'Awaiting Review',
+                    savedAt: new Date().toLocaleString(),
+                  };
+
+                  successTitleText.textContent = editingRegistrationId ? 'Registration Updated' : 'Registration Successful';
+                  successSubmissionId.textContent = latestRegistrationInfo.id;
+                  successArtworkTitle.textContent = `"${latestRegistrationInfo.artworkTitle}"`;
+                  successStatusText.textContent = latestRegistrationInfo.status;
+                  submissionSuccess.hidden = false;
+
+                  if (isLocalSaved) {
+                    note.textContent = editingRegistrationId
+                      ? 'Your registration was updated in browser records and your receipt is ready.'
+                      : 'Your artwork registration was saved successfully and your receipt is ready.';
+                  } else {
+                    note.textContent = editingRegistrationId
+                      ? 'Your registration was updated on the server and is awaiting review.'
+                      : 'Your artwork was uploaded to the server and is awaiting review.';
+                  }
+                  note.style.color = 'green';
+
+                  const wasEditing = Boolean(editingRegistrationId);
+                  form.reset();
+                  selectedArtworkFiles = [];
+                  clearArtworkPreview();
+                  clearCurrentFilesPreview();
+                  updateOtherCategoryField();
+
+                  if (wasEditing) {
+                    editingRegistrationId = null;
+                    editModeBadge.hidden = true;
+                    cancelEditButton.hidden = true;
+                    artworkFileInput.required = true;
+                    submitBtn.textContent = 'Register Artwork';
+                    editRegistrationStatus.textContent = 'Registration updated successfully.';
+                  }
+
+                  submissionSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (error) {
+                  console.error('Registration processing error:', error);
+                  note.textContent = `Error: ${error.message}`;
+                  note.style.color = 'red';
+                } finally {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = 'Register Artwork';
+                }
+              });
+
+              updateOtherCategoryField();
+
+              if (isEditPage) {
+                const editRegistrationPanel = document.getElementById('edit-registration');
+                editRegistrationPanel.hidden = false;
+                form.hidden = true;
+                note.textContent = 'Enter your Registration ID above to load your saved details.';
+                setTimeout(() => {
+                  editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  editRegistrationIdInput.focus();
+                }, 120);
+              }
+            </script>
+          </body>
+          </html>
