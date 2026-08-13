@@ -958,7 +958,8 @@
                   if (stored) return stored.replace(/\/$/, '');
                   if (window.location.protocol.startsWith('http')) {
                     if (window.location.port === '8080' || window.location.port === '8088') {
-                      return window.location.origin;
+                      return window.location.origin;;
+                  return 'https://finearts-api.katuree.com';
                     }
                     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                       return 'http://localhost:8080';
