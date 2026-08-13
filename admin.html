@@ -967,44 +967,7 @@
         console.warn('Live API list fetch failed, loading browser & static records:', err);
       }
 
-      // 2. Browser LocalStorage records
-      try {
-        const localList = JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
-        localList.forEach(r => {
-          if (!allRegistrationsMap.has(r.id)) {
-            allRegistrationsMap.set(r.id, {
-              id: r.id,
-              student: r.student?.fullName || r.studentName || 'Student',
-              rollNumber: r.student?.rollNumber || r.rollNumber || '—',
-              department: r.artwork?.category || r.category || 'Fine Arts',
-              year: r.student?.studentYear || r.studentYear || r.batch || '—',
-              artwork: r.artwork?.title || r.artworkTitle || 'Artwork',
-              medium: r.artwork?.medium || r.medium || '—',
-              size: r.artwork?.dimensions || r.dimensions || '—',
-              description: r.artwork?.description || r.description || '',
-              status: normalizeDashboardStatus(r.reviewStatus || r.status),
-              imageUrl: r.files?.[0]?.url || r.imageUrl || '',
-              fileName: r.files?.[0]?.originalName || r.files?.[0]?.storedName || '',
-              files: r.files || [],
-              approvedCopy: r.approvedCopy,
-              updatedAt: r.updatedAt || r.createdAt
-            });
-          }
-        });
-      } catch (err) {
-        console.warn('LocalStorage load failed:', err);
-      }
 
-      // 3. Fallback to admin-data.json
-      if (allRegistrationsMap.size === 0) {
-        try {
-          const response = await fetch(`./admin-data.json?v=${Date.now()}`, { cache: 'no-store' });
-          if (response.ok) {
-            const data = await response.json();
-            (data.submissions || []).forEach(r => allRegistrationsMap.set(r.id, r));
-          }
-        } catch {}
-      }
 
       dashboardRegistrations = Array.from(allRegistrationsMap.values());
       updateMetrics(calculateSummary(dashboardRegistrations));
