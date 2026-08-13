@@ -116,8 +116,15 @@ async function connectMega() {
     password: MEGA_PASSWORD,
   });
 
-  await mega.loadRoot();
-  const exhibitionRoot = await ensureMegaFolder(mega.root, MEGA_ROOT_FOLDER);
+  // Wait for root to be ready (megajs v1.x loads root asynchronously)
+  if (typeof mega.loadRoot === 'function') {
+    await mega.loadRoot();
+  }
+  if (!mega.root) {
+    mega.root = mega; // Fallback: use the storage instance itself
+  }
+
+  const exhibitionRoot = mega.root;
   const artistsRoot = await ensureMegaFolder(exhibitionRoot, 'Artists');
   const registeredRoot = await ensureMegaFolder(exhibitionRoot, 'Registered');
   const approvedRoot = await ensureMegaFolder(exhibitionRoot, 'Approved');
