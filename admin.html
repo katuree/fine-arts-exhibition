@@ -693,7 +693,7 @@
             <thead>
               <tr>
                 <th>Image</th>
-                <th>Student</th>
+                <th>Artist</th>
                 <th>Artwork</th>
                 <th>Dept</th>
                 <th>Status</th>
@@ -720,8 +720,8 @@
         <div class="preview-frame" id="modal-preview-frame"></div>
         <div>
           <div class="detail-grid">
-            <div class="detail-card"><span>Student</span><strong id="modal-student">—</strong></div>
-            <div class="detail-card"><span>Roll Number</span><strong id="modal-roll">—</strong></div>
+            <div class="detail-card"><span>Artist</span><strong id="modal-artist">—</strong></div>
+            <div class="detail-card"><span>Artist ID</span><strong id="modal-roll">—</strong></div>
             <div class="detail-card"><span>Department</span><strong id="modal-department">—</strong></div>
             <div class="detail-card"><span>Status</span><strong id="modal-status">—</strong></div>
             <div class="detail-card"><span>Title</span><strong id="modal-title">—</strong></div>
@@ -1079,7 +1079,7 @@
       if (!item) return;
       selectedRegistrationId = id;
       setText('modal-artwork-title', item.artwork || 'Artwork');
-      setText('modal-student', item.student);
+      setText('modal-artist', item.student);
       setText('modal-roll', item.rollNumber);
       setText('modal-department', item.department || item.year || 'Fine Arts');
       setText('modal-status', item.status || 'Pending');
