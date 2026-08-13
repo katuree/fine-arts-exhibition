@@ -35,7 +35,7 @@ const BATCH_FOLDERS = [
 const ARTWORK_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 const PROFILE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-const USE_MEGA = false;  // Disabled — MEGA API returns malformed responses
+const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
 
 const TEMP_DIR = path.join(os.tmpdir(), 'fine-arts-exhibition-incoming');
 await fsp.mkdir(TEMP_DIR, { recursive: true });
@@ -118,7 +118,12 @@ async function connectMega() {
   }
 
   megaRoots = { exhibitionRoot, artistsRoot, registeredRoot, approvedRoot };
-  console.log('Connected to MEGA successfully');
+  if (!registeredRoot || !approvedRoot) {
+    megaRoots = null;
+    console.error('MEGA folder setup failed — falling back to Local Disk');
+  } else {
+    console.log('Connected to MEGA successfully');
+  }
   return mega;
 }
 
@@ -714,9 +719,18 @@ app.get('/api/artists/:artistId', async (req, res) => {
 // ── MEGA storage helpers ──
 
 async function ensureMegaFolder(parent, name) {
+  if (!parent) return null;
   const existing = findChild(parent, name, true);
   if (existing) return existing;
-  return await parent.mkdir(name);
+  try {
+    return await parent.mkdir(name);
+  } catch (err) {
+    // parent might be mega (Storage instance) which doesn't have mkdir
+    if (typeof mega.createFolder === 'function') {
+      return await mega.createFolder(name);
+    }
+    throw err;
+  }
 }
 
 function findChild(parent, name, directory = null) {
