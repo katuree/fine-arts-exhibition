@@ -835,7 +835,14 @@
                 <input id="full-name" name="fullName" type="text" autocomplete="name" required />
               </div>
               <div class="field">
-                <label for="student-year">Batch <span class="required">*</span></label>
+                <div class="form-group">
+                <label for="artist-id">Artist ID <span class="required">*</span></label>
+                <input id="artist-id" name="artistId" type="text" autocomplete="off" required placeholder="Click generate to create" readonly />
+                <button type="button" class="btn btn-secondary btn-sm" id="generate-artist-id" style="margin-top:8px;">Generate ID</button>
+                <small class="hint">Click "Generate ID" to auto-create a unique Artist ID (ART-2026-XXXXXX format).</small>
+                <small class="hint">Enter a unique identifier for your submissions. Use format ART-XXXX-XXXX.</small>
+              </div>
+              <label for="student-year">Batch <span class="required">*</span></label>
                 <select id="student-year" name="studentYear" required>
                   <option value="" selected disabled>Select batch</option>
                   <option value="2020 Batch">2020 Batch</option>
@@ -1692,6 +1699,11 @@
                   editRegistrationIdInput.focus();
                 }, 120);
               }
-            </script>
+            
+    // Auto-generate Artist ID
+    document.getElementById('generate-artist-id').addEventListener('click', () => {
+      const id = 'ART-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('artist-id').value = id;
+    });</script>
           </body>
           </html>
