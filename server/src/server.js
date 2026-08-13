@@ -35,7 +35,7 @@ const BATCH_FOLDERS = [
 const ARTWORK_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 const PROFILE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-const USE_MEGA = Boolean(MEGA_EMAIL && MEGA_PASSWORD);
+const USE_MEGA = false;
 
 const TEMP_DIR = path.join(os.tmpdir(), 'fine-arts-exhibition-incoming');
 await fsp.mkdir(TEMP_DIR, { recursive: true });
@@ -107,8 +107,8 @@ async function connectMega() {
     password: MEGA_PASSWORD,
   }).ready;
 
-  // mega.root is the Storage instance's root — use mega.createFolder for root-level folders
-  const exhibitionRoot = await mega.createFolder(MEGA_ROOT_FOLDER);
+  // Use mega.root.mkdir for root-level folders
+  const exhibitionRoot = await mega.root.mkdir(MEGA_ROOT_FOLDER);
   const artistsRoot = await ensureMegaFolder(exhibitionRoot, 'Artists');
   const registeredRoot = await ensureMegaFolder(exhibitionRoot, 'Registered');
   const approvedRoot = await ensureMegaFolder(exhibitionRoot, 'Approved');
