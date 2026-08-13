@@ -107,9 +107,12 @@ async function connectMega() {
     password: MEGA_PASSWORD,
   }).ready;
 
-  // mega.root is a MutableFile (the Cloud Drive root folder)
-  // Use mega.root.mkdir(name) to create root-level folders
-  const exhibitionRoot = await mega.root.mkdir(MEGA_ROOT_FOLDER);
+  // mega.root is the Cloud Drive root folder (MutableFile)
+  // Check if 'Fine Arts Exhibition' already exists before creating
+  let exhibitionRoot = findChild(mega.root, MEGA_ROOT_FOLDER, true);
+  if (!exhibitionRoot) {
+    exhibitionRoot = await mega.root.mkdir(MEGA_ROOT_FOLDER);
+  }
 
   const artistsRoot = await ensureMegaFolder(exhibitionRoot, 'Artists');
   const registeredRoot = await ensureMegaFolder(exhibitionRoot, 'Registered');
@@ -728,7 +731,16 @@ async function ensureMegaFolder(parent, name) {
   if (!parent) return null;
   const existing = findChild(parent, name, true);
   if (existing) return existing;
-  return await parent.mkdir(name);
+  try {
+    return await parent.mkdir(name);
+  } catch (err) {
+    // mkdir failed — folder might already exist, reload children
+    if (parent.children) {
+      const recheck = findChild(parent, name, true);
+      if (recheck) return recheck;
+    }
+    throw err;
+  }
 }
 
 function findChild(parent, name, directory = null) {
