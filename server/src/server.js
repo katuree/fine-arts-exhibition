@@ -124,7 +124,9 @@ async function connectMega() {
     mega.root = mega; // Fallback: use the storage instance itself
   }
 
-  const exhibitionRoot = mega.root;
+  // mega.root might be the Storage instance itself, which has 'children' as a getter
+  let exhibitionRoot = mega.root;
+  // If mega.root is a Storage instance, use it directly — ensureMegaFolder handles it
   const artistsRoot = await ensureMegaFolder(exhibitionRoot, 'Artists');
   const registeredRoot = await ensureMegaFolder(exhibitionRoot, 'Registered');
   const approvedRoot = await ensureMegaFolder(exhibitionRoot, 'Approved');
@@ -143,6 +145,7 @@ async function ensureMegaFolder(parent, name) {
   if (!parent) return null;
   const children = (parent.children || []).filter(c => c.name === name && c.directory);
   if (children.length) return children[0];
+  if (typeof parent.createFolder !== 'function') return null;
   const newFolder = await parent.createFolder(name);
   return newFolder;
 }
