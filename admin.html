@@ -694,6 +694,7 @@
               <tr>
                 <th>Image</th>
                 <th>Artist</th>
+                <th>Artist ID</th>
                 <th>Artwork</th>
                 <th>Dept</th>
                 <th>Status</th>
@@ -849,7 +850,7 @@
     function renderRegistrations() {
       registrationsBody.innerHTML = '';
       if (!dashboardRegistrations.length) {
-        registrationsBody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
+        registrationsBody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No valid college registrations are available yet.</div></td></tr>';
         return;
       }
       dashboardRegistrations.forEach((item) => {
@@ -858,7 +859,8 @@
         row.dataset.registrationId = item.id;
         row.innerHTML = `
           <td>${renderThumbnail(item)}</td>
-          <td><p class="student-name">${escapeHtml(item.student)}</p><p class="muted-text">${escapeHtml(item.rollNumber)}</p></td>
+          <td><p class="student-name">${escapeHtml(item.student)}</p><p class="muted-text">${escapeHtml(item.artistId || '—')}</p></td>
+          <td><p class="muted-text" style="color:var(--soft-ink);font-weight:700;">${escapeHtml(item.artistId || '—')}</p></td>
           <td><p class="artwork-name">${escapeHtml(item.artwork)}</p><p class="muted-text">${escapeHtml(item.medium || '—')}</p></td>
           <td>${escapeHtml(item.department || item.year || 'Fine Arts')}</td>
           <td><span class="status-pill ${statusClass(item.status)}">${escapeHtml(item.status || 'Pending')}</span></td>`;
