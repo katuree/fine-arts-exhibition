@@ -987,7 +987,6 @@
               const saveRegistrationInfoButton = document.getElementById('save-registration-info');
               const editRegistrationIdInput = document.getElementById('edit-registration-id');
               const loadRegistrationButton = document.getElementById('load-registration-button');
-              const cancelEditButton = document.getElementById('cancel-edit-button');
               const editModeBadge = document.getElementById('edit-mode-badge');
               const editRegistrationStatus = document.getElementById('edit-registration-status');
               const successTitleText = document.getElementById('success-title-text');
@@ -1466,7 +1465,6 @@
                 editingRegistrationId = null;
                 editRegistrationIdInput.value = '';
                 editModeBadge.hidden = true;
-                cancelEditButton.hidden = true;
                 form.hidden = false;
                 form.querySelector('.register-button').textContent = 'Register Artwork';
                 editRegistrationStatus.textContent = 'Editing cancelled.';
@@ -1546,7 +1544,6 @@
               }
 
               loadRegistrationButton.addEventListener('click', loadExistingRegistration);
-              cancelEditButton.addEventListener('click', clearEditMode);
 
               form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1681,7 +1678,6 @@
                   if (wasEditing) {
                     editingRegistrationId = null;
                     editModeBadge.hidden = true;
-                    cancelEditButton.hidden = true;
                     artworkFileInput.required = true;
                     submitBtn.textContent = 'Register Artwork';
                     editRegistrationStatus.textContent = 'Registration updated successfully.';
