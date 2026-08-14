@@ -1447,9 +1447,7 @@
                 editRegistrationIdInput.value = '';
                 editModeBadge.hidden = true;
                 cancelEditButton.hidden = true;
-                document.getElementById('edit-registration').hidden = true;
-                form.hidden = isEditPage;
-                artworkFileInput.required = true;
+                form.hidden = false;
                 form.querySelector('.register-button').textContent = 'Register Artwork';
                 editRegistrationStatus.textContent = '';
                 form.reset();
@@ -1687,8 +1685,7 @@
               if (isEditPage) {
                 const editRegistrationPanel = document.getElementById('edit-registration');
                 editRegistrationPanel.hidden = false;
-                form.hidden = true;
-                note.textContent = 'Enter your Registration ID above to load your saved details.';
+                note.textContent = 'Enter your Registration ID above to load and edit your existing submission.';
                 setTimeout(() => {
                   editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   editRegistrationIdInput.focus();
