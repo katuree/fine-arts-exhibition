@@ -1449,7 +1449,7 @@
                 cancelEditButton.hidden = true;
                 form.hidden = false;
                 form.querySelector('.register-button').textContent = 'Register Artwork';
-                editRegistrationStatus.textContent = '';
+                editRegistrationStatus.textContent = 'Editing cancelled.';
                 form.reset();
                 selectedArtworkFiles = [];
                 clearArtworkPreview();
@@ -1685,9 +1685,9 @@
               if (isEditPage) {
                 const editRegistrationPanel = document.getElementById('edit-registration');
                 editRegistrationPanel.hidden = false;
-                note.textContent = 'Enter your Registration ID above to load and edit your existing submission.';
+                form.hidden = false;
+                note.textContent = 'Enter your Registration ID above (in the Edit panel) to load and edit your existing submission, or fill the form below for a new registration.';
                 setTimeout(() => {
-                  editRegistrationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   editRegistrationIdInput.focus();
                 }, 120);
               }
