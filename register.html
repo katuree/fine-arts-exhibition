@@ -1462,11 +1462,9 @@
               function getStoredLocalRegistrations() {
                 try {
                   return JSON.parse(localStorage.getItem('LOCAL_REGISTRATIONS') || '[]');
-                } catch {
+                } catch (e) {
                   return [];
                 }
-     catch {}
-
               }
 
               function saveLocalRegistrationRecord(registration) {
