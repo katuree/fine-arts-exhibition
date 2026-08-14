@@ -820,7 +820,6 @@
               <input id="edit-registration-id" type="text" autocomplete="off" placeholder="Paste Registration ID" />
             </div>
             <button class="small-action-button" type="button" id="load-registration-button">Load</button>
-            <button class="small-action-button secondary" type="button" id="cancel-edit-button" hidden>New Registration</button>
           </div>
           <span class="edit-mode-badge" id="edit-mode-badge" hidden>Edit Mode</span>
           <p class="edit-status" id="edit-registration-status" aria-live="polite"></p>
@@ -1418,11 +1417,9 @@
               }
 
               function setEditMode(registration) {
-                form.hidden = false;
                 editingRegistrationId = registration.id;
                 editRegistrationIdInput.value = registration.id;
                 editModeBadge.hidden = false;
-                cancelEditButton.hidden = false;
                 artworkFileInput.required = false;
                 form.querySelector('.register-button').textContent = 'Update Registration';
                 editRegistrationStatus.textContent = `Editing registration ${registration.id}. Upload new files only if you want to replace the existing artwork files.`;
@@ -1440,6 +1437,29 @@
                 renderCurrentFilesPreview(registration.files || []);
                 note.textContent = 'Edit mode: current artwork files will stay unless you select new files.';
                 note.style.color = '';
+
+                // Show full form
+                form.hidden = false;
+
+                // Load profile picture if available
+                const profilePic = registration.student?.profilePicture;
+                const profilePicInput = document.getElementById('profile-picture');
+                const profilePicPreview = profilePicInput?.closest('.field')?.querySelector('.profile-pic-preview');
+                if (profilePic && profilePic.url) {
+                  // Create a blob from the image URL
+                  fetch(profilePic.url)
+                    .then(resp => resp.blob())
+                    .then(blob => {
+                      const file = new File([blob], profilePic.originalName || 'profile-picture.png', { type: blob.type });
+                      // Create a DataTransfer to set files on input
+                      const dt = new DataTransfer();
+                      dt.items.add(file);
+                      profilePicInput.files = dt.files;
+                    })
+                    .catch(() => {
+                      console.warn('Could not load profile picture from URL');
+                    });
+                }
               }
 
               function clearEditMode() {
@@ -1683,8 +1703,8 @@
               if (isEditPage) {
                 const editRegistrationPanel = document.getElementById('edit-registration');
                 editRegistrationPanel.hidden = false;
-                form.hidden = false;
-                note.textContent = 'Enter your Registration ID above (in the Edit panel) to load and edit your existing submission, or fill the form below for a new registration.';
+                form.hidden = true;
+                note.textContent = 'Enter your Registration ID above and click Load to edit your existing submission.';
                 setTimeout(() => {
                   editRegistrationIdInput.focus();
                 }, 120);
