@@ -218,6 +218,26 @@
       text-shadow: none;
     }
 
+    .counter-number.loading {
+      font-size: clamp(4.5rem, 9vw, 9rem);
+      color: var(--soft-ink);
+    }
+
+    @keyframes counter-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .counter-spinner {
+      display: inline-block;
+      width: clamp(3rem, 6vw, 6rem);
+      height: clamp(3rem, 6vw, 6rem);
+      border: 6px solid var(--line);
+      border-top-color: var(--ink);
+      border-radius: 50%;
+      animation: counter-spin 0.8s linear infinite;
+    }
+
     .counter-word {
       display: block;
       width: 100%;
@@ -479,7 +499,7 @@
         <div class="counter-badge" aria-label="Total artworks registered">
           <div class="badge-inner">
             <span>
-              <span class="counter-number" id="artwork-count">0</span>
+              <span class="counter-number loading" id="artwork-count"><span class="counter-spinner"></span></span>
               <span class="counter-word">Total Artworks Registered</span>
             </span>
           </div>
@@ -506,6 +526,13 @@
             <li>Accepted upload formats: JPG, PNG, and PDF.</li>
             <li>Artwork must include title, medium, category, dimensions, and description.</li>
           </ul>
+        </article>
+
+        <article id="contact-info" class="info-card">
+          <h2>Contact Us</h2>
+          <p>For any queries regarding the registration or exhibition, reach out to us.</p>
+          <p style="margin-top:16px;"><strong>Phone</strong></p>
+          <p style="font-size:1.25rem;font-weight:800;margin-top:6px;"><a href="tel:+917416642688" style="color:inherit;text-decoration:underline;">+91 7416642688</a></p>
         </article>
       </section>
     </section>
@@ -564,6 +591,7 @@
           } catch {}
         }
 
+        counter.classList.remove('loading');
         counter.textContent = String(total);
       } catch (error) {
         console.warn('Could not update artwork count', error);
