@@ -753,22 +753,29 @@
   <script>
     const ADMIN_PASSWORD_HASH = '9254c1e1f3e2f78d789d4abd092f6a99aef737a76561b0da5493fc2e248844f0';
     function getApiUrl() {
+      const PUBLIC_API_URL = 'https://finearts-api.katuree.com';
+      const LAN_API_URL = 'http://192.168.1.45:8088';
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         if (params.get('api')) return params.get('api').replace(/\/$/, '');
         const stored = localStorage.getItem('EXHIBITION_API_URL');
-        if (stored) return stored.replace(/\/$/, '');
+        if (stored) {
+          const storedUrl = stored.replace(/\/$/, '');
+          if (window.location.protocol !== 'https:' || storedUrl.startsWith('https://')) return storedUrl;
+        }
         if (window.location.protocol.startsWith('http')) {
           if (window.location.port === '8080' || window.location.port === '8088') {
-            return window.location.origin;;
-                  return 'https://finearts-api.katuree.com';
+            return window.location.origin;
           }
           if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
           }
+          if (window.location.protocol === 'https:' || !window.location.hostname.match(/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/)) {
+            return PUBLIC_API_URL;
+          }
         }
       }
-      return 'http://192.168.1.45:8088';
+      return LAN_API_URL;
     }
     const API_URL = getApiUrl();
     const adminLoginPanel = document.getElementById('admin-login-panel');

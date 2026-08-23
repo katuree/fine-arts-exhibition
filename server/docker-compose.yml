@@ -13,7 +13,7 @@ services:
       GITHUB_BRANCH: "main"
       # Set this in TrueNAS app environment, do not commit real token:
       GITHUB_TOKEN: ""
-      PUBLIC_BASE_URL: "http://192.168.1.45:8088"
+      PUBLIC_BASE_URL: "https://finearts-api.katuree.com"
       MAX_FILE_MB: "50"
     volumes:
       # Change the left side to your TrueNAS MEGA sync dataset path.

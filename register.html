@@ -950,11 +950,16 @@
             </main>
             <script>
               function getApiUrl() {
+                const PUBLIC_API_URL = 'https://finearts-api.katuree.com';
+                const LAN_API_URL = 'http://192.168.1.45:8088';
                 if (typeof window !== 'undefined') {
                   const params = new URLSearchParams(window.location.search);
                   if (params.get('api')) return params.get('api').replace(/\/$/, '');
                   const stored = localStorage.getItem('EXHIBITION_API_URL');
-                  if (stored) return stored.replace(/\/$/, '');
+                  if (stored) {
+                    const storedUrl = stored.replace(/\/$/, '');
+                    if (window.location.protocol !== 'https:' || storedUrl.startsWith('https://')) return storedUrl;
+                  }
                   if (window.location.protocol.startsWith('http')) {
                     if (window.location.port === '8080' || window.location.port === '8088') {
                       return window.location.origin;
@@ -962,9 +967,12 @@
                     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                       return 'http://localhost:8080';
                     }
+                    if (window.location.protocol === 'https:' || !window.location.hostname.match(/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/)) {
+                      return PUBLIC_API_URL;
+                    }
                   }
                 }
-                return 'http://192.168.1.45:8088';
+                return LAN_API_URL;
               }
               const API_URL = getApiUrl();
 
@@ -1602,39 +1610,8 @@
                       throw new Error(result.error || 'Server error');
                     }
                   } catch (apiError) {
-                    console.warn('Backend API request could not be reached (saving locally):', apiError);
-                    isLocalSaved = true;
-                    const localId = editingRegistrationId || `ART-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-                    const localFiles = [];
-                    for (const file of selectedArtworkFiles) {
-                      const dataUrl = await fileToDataUrl(file);
-                      localFiles.push({
-                        originalName: file.name,
-                        storedName: file.name,
-                        mimeType: file.type,
-                        size: file.size,
-                        url: dataUrl,
-                      });
-                    }
-
-                    savedRegistration = {
-                      id: localId,
-                      status: 'Pending',
-                      createdAt: now,
-                      updatedAt: now,
-                      student: {
-                        fullName: formData.get('fullName') || '',
-                        studentYear: formData.get('studentYear') || '',
-                      },
-                      artwork: {
-                        title: submittedArtworkTitle,
-                        category: formData.get('category') || '',
-                        medium: formData.get('medium') || '',
-                        dimensions: formData.get('dimensions') || '',
-                        description: formData.get('description') || '',
-                      },
-                      files: localFiles.length ? localFiles : currentRegistrationFiles,
-                    };
+                    console.error('Backend API request failed; registration was not saved to MEGA:', apiError);
+                    throw new Error(`Registration server could not be reached, so this was not saved to MEGA. Please check your internet connection and try again. (${apiError.message || 'network error'})`);
                   }
 
                   saveLocalRegistrationRecord(savedRegistration);
