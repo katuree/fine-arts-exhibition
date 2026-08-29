@@ -1,21 +1,24 @@
+# Deploy the Fine Arts Exhibition API on TrueNAS
+#
+# Usage: cd /mnt/Pool/fine-arts-api && docker compose up -d --build
+
+version: "3.8"
+
 services:
-  fine-arts-exhibition-api:
-    build: .
-    container_name: fine-arts-exhibition-api
-    user: "9100:9100"
+  fine-arts-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fine-arts-api
     restart: unless-stopped
-    ports:
-      - "8088:8080"
+    network_mode: host
     environment:
-      PORT: "8080"
-      GITHUB_OWNER: "katuree"
-      GITHUB_REPO: "fine-arts-exhibition"
-      GITHUB_BRANCH: "main"
-      # Set this in TrueNAS app environment, do not commit real token:
-      GITHUB_TOKEN: ""
-      PUBLIC_BASE_URL: "https://finearts-api.katuree.com"
-      MAX_FILE_MB: "50"
+      - MEGA_EMAIL=${MEGA_EMAIL:-bacheloroffineartsanu@tutamail.com}
+      - MEGA_PASSWORD=${MEGA_PASSWORD:-Fine-arts2026}
+      - MEGA_ROOT_FOLDER=${MEGA_ROOT_FOLDER:-Fine Arts Exhibition}
+      - UPLOAD_DIR=/data/uploads
+      - PORT=8088
+      - MAX_FILE_MB=50
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8088}
     volumes:
-      # Change the left side to your TrueNAS MEGA sync dataset path.
-      # This folder receives uploaded artwork files.
-      - /mnt/tank/mega/fine-arts-exhibition:/data/uploads
+      - ./uploads:/data/uploads
