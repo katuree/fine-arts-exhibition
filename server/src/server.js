@@ -830,7 +830,7 @@ async function readMegaJsonFile(folder, filename) {
 async function listMegaRegistrationsFromRoot(root, defaultStatus) {
   if (!root) return [];
 
-  const timeoutMs = 300_000; // 5 minutes
+  const timeoutMs = 30_000; // 30 seconds
   let timer = null;
   try {
     const promise = (async () => {
@@ -839,7 +839,10 @@ async function listMegaRegistrationsFromRoot(root, defaultStatus) {
         if (!batchFolder.directory) continue;
         for (const artistFolder of batchFolder.children || []) {
           if (!artistFolder.directory) continue;
-          const artistInfo = await getArtistInfo(artistFolder.name);
+          let artistInfo = null;
+          try {
+            artistInfo = await readMegaJsonFile(artistFolder, 'artist-info.json');
+          } catch {}
           for (const registrationFolder of artistFolder.children || []) {
             if (!registrationFolder.directory) continue;
             const registration = await readMegaJsonFile(registrationFolder, 'artwork-info.json');
