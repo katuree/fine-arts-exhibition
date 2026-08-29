@@ -538,6 +538,8 @@ app.put('/api/registrations/:id', registrationUpload, async (req, res) => {
       }
       await fsp.writeFile(path.join(artistDir, 'artist-info.json'), JSON.stringify(artistInfo, null, 2), 'utf8');
 
+      await publishAdminDataToGitHub();
+
       let files = Array.isArray(existing.files) ? existing.files : [];
       if (artworkUploads.length) {
         const regDir = found.dir;
@@ -677,6 +679,9 @@ app.patch('/api/registrations/:id/review', async (req, res) => {
       };
 
       await fsp.writeFile(path.join(targetDir, 'artwork-info.json'), JSON.stringify(registration, null, 2), 'utf8');
+
+      await publishAdminDataToGitHub();
+
       const artistInfo = await getArtistInfo(registration.artistId);
 
       res.json({
@@ -1166,6 +1171,34 @@ app.use((error, req, res, next) => {
     return res.status(400).json({ error: error.message, field: error.field || null });
   }
   res.status(400).json({ error: error.message || 'Bad request.' });
+});
+
+
+// ── Build and publish admin-data.json ──
+async function publishAdminDataToGitHub() {
+  try {
+    const { buildAdminData } = await import('./scripts/buildAdminData.js');
+    const data = buildAdminData();
+    const json = JSON.stringify(data, null, 2);
+    const outputPath = path.resolve(ROOT_DIR, 'admin-data.json');
+    await fsp.writeFile(outputPath, json, 'utf8');
+    console.log('[publishAdminDataToGitHub] Wrote admin-data.json locally');
+    await execFile('git', ['-C', ROOT_DIR, 'add', 'admin-data.json']);
+    await execFile('git', ['-C', ROOT_DIR, '-c', 'user.name=exhibition-bot', '-c', 'user.email=bot@exhibition', 'commit', '-m', 'chore: update admin-data.json', 'admin-data.json']);
+    await execFile('git', ['-C', ROOT_DIR, 'push', 'origin', 'main']);
+    console.log('[publishAdminDataToGitHub] Pushed admin-data.json to GitHub');
+  } catch (err) {
+    console.error('[publishAdminDataToGitHub] Failed:', err.message);
+  }
+}
+
+app.get('/api/admin-data/build', async (req, res) => {
+  try {
+    await publishAdminDataToGitHub();
+    res.json({ ok: true, message: 'admin-data.json rebuilt and pushed.' });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
