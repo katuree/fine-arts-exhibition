@@ -1196,7 +1196,7 @@ app.use((error, req, res, next) => {
 // ── Build and publish admin-data.json ──
 async function publishAdminDataToGitHub() {
   try {
-    const { buildAdminData } = await import('./scripts/buildAdminData.js');
+    const { buildAdminData } = await import('../scripts/buildAdminData.js');
     const data = buildAdminData();
     const json = JSON.stringify(data, null, 2);
     const outputPath = path.resolve(ROOT_DIR, 'admin-data.json');
