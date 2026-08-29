@@ -20,12 +20,11 @@ async function getRegistrations() {
   try {
     const resp = await fetch('http://localhost:8088/api/registrations');
     const data = await resp.json();
-    if (data.registrations) {
-      return data.registrations.map(r => ({
-        ...r,
-        status: normalizeReviewStatus(r.reviewStatus || r.status),
-      }));
-    }
+    const regs = data.registrations || [];
+    return regs.map(r => ({
+      ...r,
+      status: normalizeReviewStatus(r.reviewStatus || r.status),
+    }));
   } catch (err) {
     console.error('[buildAdminData] API call failed:', err.message);
   }
