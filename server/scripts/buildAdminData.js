@@ -4,15 +4,8 @@
  * and builds admin-data.json for the GitHub Pages admin dashboard.
  */
 
-import { execFile } from 'child_process';
 import path from 'path';
-import crypto from 'crypto';
 import fs from 'fs/promises';
-
-const BATCH_FOLDERS = [
-  '2020 Batch', '2021 Batch', '2022 Batch',
-  '2023 Batch', '2024 Batch', '2025 Batch',
-];
 
 function normalizeReviewStatus(status) {
   if (!status) return 'Pending';
@@ -22,25 +15,11 @@ function normalizeReviewStatus(status) {
   return 'Pending';
 }
 
-function mimeFromName(filename) {
-  const ext = path.extname(filename).toLowerCase();
-  const types = {
-    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
-    '.pdf': 'application/pdf', '.webp': 'image/webp',
-  };
-  return types[ext] || 'application/octet-stream';
-}
-
 async function getRegistrations() {
-  // Call the local API endpoint which handles MEGA listing internally
-  // Uses child_process to avoid ESM import issues with megajs in this context
+  // Use Node's built-in fetch (no curl dependency needed)
   try {
-    const { stdout } = await execFile('curl', [
-      '-s',
-      '--max-time', '300',
-      'http://localhost:8088/api/registrations'
-    ]);
-    const data = JSON.parse(stdout);
+    const resp = await fetch('http://localhost:8088/api/registrations');
+    const data = await resp.json();
     if (data.registrations) {
       return data.registrations.map(r => ({
         ...r,
