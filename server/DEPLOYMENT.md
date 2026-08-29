@@ -45,11 +45,12 @@ curl http://192.168.1.45:8080/api/health
 curl https://finearts-api.katuree.com/api/health
 ```
 
-### Step 4: Seed admin-data.json
+### Step 4: Seed admin-data.json via the API endpoint (not manual)
 ```bash
-# Run the build script once to seed admin-data.json
-docker exec fine-arts-api node /app/scripts/buildAdminData.js /app/admin-data.json
+# The rebuild endpoint now works — it connects to MEGA to list registrations
+curl http://localhost:8088/api/admin-data/build
 ```
+The `buildAdminData.js` now scans **MEGA** directly (same as `listMegaRegistrationsFromRoot`), since all registration data is stored in MEGA, not on the local disk.
 
 ### Step 5: Add `publishAdminDataToGitHub()` to server.js
 See `patch-server-additions.md` in `server/scripts/` for the code to add.
