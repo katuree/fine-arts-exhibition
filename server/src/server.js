@@ -828,21 +828,40 @@ async function readMegaJsonFile(folder, filename) {
 }
 
 async function listMegaRegistrationsFromRoot(root, defaultStatus) {
-  const output = [];
-  for (const batchFolder of root.children || []) {
-    if (!batchFolder.directory) continue;
-    for (const artistFolder of batchFolder.children || []) {
-      if (!artistFolder.directory) continue;
-      const artistInfo = await getArtistInfo(artistFolder.name);
-      for (const registrationFolder of artistFolder.children || []) {
-        if (!registrationFolder.directory) continue;
-        const registration = await readMegaJsonFile(registrationFolder, 'artwork-info.json');
-        if (!registration) continue;
-        output.push(hydrateRegistration({ ...registration, status: registration.status || defaultStatus }, artistInfo));
+  if (!root) return [];
+
+  const timeoutMs = 300_000; // 5 minutes
+  let timer = null;
+  try {
+    const promise = (async () => {
+      const output = [];
+      for (const batchFolder of root.children || []) {
+        if (!batchFolder.directory) continue;
+        for (const artistFolder of batchFolder.children || []) {
+          if (!artistFolder.directory) continue;
+          const artistInfo = await getArtistInfo(artistFolder.name);
+          for (const registrationFolder of artistFolder.children || []) {
+            if (!registrationFolder.directory) continue;
+            const registration = await readMegaJsonFile(registrationFolder, 'artwork-info.json');
+            if (!registration) continue;
+            output.push(hydrateRegistration({ ...registration, status: registration.status || defaultStatus }, artistInfo));
+          }
+        }
       }
-    }
+      return output;
+    })();
+
+    timer = setTimeout(() => {
+      throw new Error(`MEGA listing timed out after ${timeoutMs / 1000}s`);
+    }, timeoutMs);
+
+    return await promise;
+  } catch (err) {
+    console.error('[MEGA listing error]:', err.message);
+    return [];
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  return output;
 }
 
 async function deleteMegaArtworkFiles(folder, files) {
